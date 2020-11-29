@@ -1461,20 +1461,21 @@ void LVColorDrawBuf::Clear( lUInt32 color )
         lUInt16 cl16 = rgb888to565(color);
         for (int y=0; y<_dy; y++)
         {
-            lUInt16 * line = (lUInt16 *)GetScanLine(y);
-            for (int x=0; x<_dx; x++)
+            lUInt16 * dst = (lUInt16 *)GetScanLine(y);
+            while (px_count--)
             {
-                line[x] = cl16;
+                *dst++ = cl16;
             }
         }
     } else {
         lUint32 cl32 = RevRGBA(color);
         for (int y=0; y<_dy; y++)
         {
-            lUInt32 * line = (lUInt32 *)GetScanLine(y);
-            for (int x=0; x<_dx; x++)
+            lUInt32 * dst = (lUInt32 *)GetScanLine(y);
+            size_t px_count = _dx;
+            while (px_count--)
             {
-                line[x] = cl32;
+                *dst++ = cl32;
             }
         }
     }
