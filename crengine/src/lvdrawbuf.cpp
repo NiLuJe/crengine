@@ -1458,7 +1458,7 @@ void LVColorDrawBuf::Draw( LVImageSourceRef img, int x, int y, int width, int he
 void LVColorDrawBuf::Clear( lUInt32 color )
 {
     if ( _bpp==16 ) {
-        lUInt16 cl16 = rgb888to565(color);
+        const lUInt16 cl16 = rgb888to565(color);
         for (int y=0; y<_dy; y++)
         {
             lUInt16 * dst = (lUInt16 *)GetScanLine(y);
@@ -1469,7 +1469,7 @@ void LVColorDrawBuf::Clear( lUInt32 color )
             }
         }
     } else {
-        lUInt32 cl32 = RevRGBA(color);
+        const lUInt32 cl32 = RevRGBA(color);
         for (int y=0; y<_dy; y++)
         {
             lUInt32 * dst = (lUInt32 *)GetScanLine(y);
