@@ -1468,12 +1468,13 @@ void LVColorDrawBuf::Clear( lUInt32 color )
             }
         }
     } else {
+        lUint32 cl32 = RevRGBA(color);
         for (int y=0; y<_dy; y++)
         {
             lUInt32 * line = (lUInt32 *)GetScanLine(y);
             for (int x=0; x<_dx; x++)
             {
-                line[x] = RevRGBA(color);
+                line[x] = cl32;
             }
         }
     }
