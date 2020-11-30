@@ -1945,6 +1945,7 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
             size_t px_count = width;
             while (px_count--)
             {
+                // NOTE: Not quite sure what's the rationale for the funky semi half-precision alpha-blending there...
                 const lUInt32 opaque = ((*(src++))>>1)&0x7F;
                 if ( opaque>=0x78 )
                     *dst = bmpcl32;
