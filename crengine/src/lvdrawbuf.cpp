@@ -83,25 +83,25 @@ static lUInt8 rgbToGrayMask( lUInt32 color, int bpp )
     return (lUInt8)color;
 }
 
-static void ApplyAlphaRGB( lUInt32 &dst, lUInt32 src, lUInt32 alpha )
+static void ApplyAlphaRGB( lUInt32 &dst, lUInt32 src, lUInt8 alpha )
 {
     if ( alpha == 0 ) {
         dst = src;
     } else if ( alpha < 255 ) {
         src &= 0xFFFFFF;
-        const lUInt32 opaque = alpha ^ 0xFF;
+        const lUInt8 opaque = alpha ^ 0xFF;
         const lUInt32 n1 = (((dst & 0xFF00FF) * alpha + (src & 0xFF00FF) * opaque) >> 8) & 0xFF00FF;
         const lUInt32 n2 = (((dst & 0x00FF00) * alpha + (src & 0x00FF00) * opaque) >> 8) & 0x00FF00;
         dst = n1 | n2;
     }
 }
 
-static void ApplyAlphaRGB565( lUInt16 &dst, lUInt16 src, lUInt32 alpha )
+static void ApplyAlphaRGB565( lUInt16 &dst, lUInt16 src, lUInt8 alpha )
 {
     if ( alpha==0 ) {
         dst = src;
     } else if ( alpha < 255 ) {
-        const lUInt32 opaque = alpha ^ 0xFF;
+        const lUInt8 opaque = alpha ^ 0xFF;
         const lUInt32 r = (((dst & 0xF800) * alpha + (src & 0xF800) * opaque) >> 8) & 0xF800;
         const lUInt32 g = (((dst & 0x07E0) * alpha + (src & 0x07E0) * opaque) >> 8) & 0x07E0;
         const lUInt32 b = (((dst & 0x001F) * alpha + (src & 0x001F) * opaque) >> 8) & 0x001F;
@@ -570,7 +570,7 @@ public:
                 {
                     lUInt32 cl = data[xmap ? xmap[x] : x];
                     int xx = x + dst_x;
-                    lUInt32 alpha = (cl >> 24)&0xFF;
+                    lUInt8 alpha = (cl >> 24)&0xFF;
 
                     if ( xx<clip.left || xx>=clip.right ) {
                         // OOB, don't plot it!
@@ -613,7 +613,7 @@ public:
                 {
                     lUInt32 cl = data[xmap ? xmap[x] : x];
                     int xx = x + dst_x;
-                    lUInt32 alpha = (cl >> 24)&0xFF;
+                    lUInt8 alpha = (cl >> 24)&0xFF;
 
                     if ( xx<clip.left || xx>=clip.right ) {
                         // OOB, don't plot it!
@@ -649,7 +649,7 @@ public:
                     int srcx = xmap ? xmap[x] : x;
                     lUInt32 cl = data[srcx];
                     int xx = x + dst_x;
-                    lUInt32 alpha = (cl >> 24)&0xFF;
+                    lUInt8 alpha = (cl >> 24)&0xFF;
 
                     if ( xx<clip.left || xx>=clip.right ) {
                         // OOB, don't plot it!
@@ -706,7 +706,7 @@ public:
                 {
                     lUInt32 cl = data[xmap ? xmap[x] : x];
                     int xx = x + dst_x;
-                    lUInt32 alpha = (cl >> 24)&0xFF;
+                    lUInt8 alpha = (cl >> 24)&0xFF;
 
                     if ( xx<clip.left || xx>=clip.right ) {
                         // OOB, don't plot it!
@@ -757,7 +757,7 @@ public:
                 {
                     lUInt32 cl = data[xmap ? xmap[x] : x];
                     int xx = x + dst_x;
-                    lUInt32 alpha = (cl >> 24)&0xFF;
+                    lUInt8 alpha = (cl >> 24)&0xFF;
 
                     if ( xx<clip.left || xx>=clip.right ) {
                         // OOB, don't plot it!
@@ -1639,7 +1639,7 @@ void LVColorDrawBuf::FillRect( int x0, int y0, int x1, int y1, lUInt32 color )
         y1 = _clip.bottom;
     if (x0>=x1 || y0>=y1)
         return;
-    int alpha = (color >> 24) & 0xFF;
+    lUInt8 alpha = (color >> 24) & 0xFF;
     if ( _bpp==16 ) {
         lUInt16 cl16 = rgb888to565(color);
         for (int y=y0; y<y1; y++)
