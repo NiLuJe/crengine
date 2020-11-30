@@ -1889,7 +1889,7 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
             const lUInt8 * src = bitmap;
             lUInt16 * dst = ((lUInt16*)GetScanLine(y++)) + x;
 
-            size_t px_count == width;
+            size_t px_count = width;
             while (px_count--)
             {
                 const lUInt32 opaque = ((*(src++))>>4)&0x0F;
@@ -1913,7 +1913,7 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
             const lUInt8 * src = bitmap;
             lUInt32 * dst = ((lUInt32*)GetScanLine(y++)) + x;
 
-            size_t px_count == width;
+            size_t px_count = width;
             while (px_count--)
             {
                 const lUInt32 opaque = ((*(src++))>>1)&0x7F;
