@@ -2006,14 +2006,14 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
         memcpy( buf->GetScanLine(0), GetScanLine(0), GetHeight() * GetRowSize() );
 		return;
 	}
-    int bpp = GetBitsPerPixel();
+    const int bpp = GetBitsPerPixel();
 	if (buf->GetBitsPerPixel() == 32) {
 		// support for 32bpp to Gray drawing
 	    for (int yy=0; yy<_dy; yy++)
 	    {
 	        if (y+yy >= clip.top && y+yy < clip.bottom)
 	        {
-	            lUInt8 * src = (lUInt8 *)GetScanLine(yy);
+	            const lUInt8 * src = (lUInt8 *)GetScanLine(yy);
                 lUInt32 * dst = ((lUInt32 *)buf->GetScanLine(y+yy)) + x;
 	            if (bpp==1)
 	            {
@@ -2022,7 +2022,7 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
 	                {
 	                    if ( x+xx >= clip.left && x+xx < clip.right )
 	                    {
-	                        lUInt8 cl = (*src << shift) & 0x80;
+	                        const lUInt8 cl = (*src << shift) & 0x80;
 	                        *dst = cl ? 0xFFFFFF : 0x000000;
 	                    }
 	                    dst++;
@@ -2083,7 +2083,7 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
 	    {
 	        if (y+yy >= clip.top && y+yy < clip.bottom)
 	        {
-	            lUInt8 * src = (lUInt8 *)GetScanLine(yy);
+	            const lUInt8 * src = (lUInt8 *)GetScanLine(yy);
                 lUInt16 * dst = ((lUInt16 *)buf->GetScanLine(y+yy)) + x;
 	            if (bpp==1)
 	            {
@@ -2092,7 +2092,7 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
 	                {
 	                    if ( x+xx >= clip.left && x+xx < clip.right )
 	                    {
-	                        lUInt8 cl = (*src << shift) & 0x80;
+	                        const lUInt8 cl = (*src << shift) & 0x80;
 	                        *dst = cl ? 0xFFFF : 0x0000;
 	                    }
 	                    dst++;
@@ -2153,7 +2153,7 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
     {
         if (y+yy >= clip.top && y+yy < clip.bottom)
         {
-            lUInt8 * src = (lUInt8 *)GetScanLine(yy);
+            const lUInt8 * src = (lUInt8 *)GetScanLine(yy);
             if (bpp==1)
             {
                 int shift = x & 7;
@@ -2163,8 +2163,8 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
                     if ( x+xx >= clip.left && x+xx < clip.right )
                     {
                         //lUInt8 mask = ~((lUInt8)0xC0>>shift);
-                        lUInt16 cl = (*src << 8)>>shift;
-                        lUInt16 mask = (0xFF00)>>shift;
+                        const lUInt16 cl = (*src << 8)>>shift;
+                        const lUInt16 mask = (0xFF00)>>shift;
 						lUInt8 c = *dst;
 						c &= ~(mask>>8);
 						c |= (cl>>8);
@@ -2189,8 +2189,8 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
                     if ( x+xx >= clip.left && x+xx < clip.right )
                     {
                         //lUInt8 mask = ~((lUInt8)0xC0>>shift);
-                        lUInt16 cl = (*src << 8)>>shift;
-                        lUInt16 mask = (0xFF00)>>shift;
+                        const lUInt16 cl = (*src << 8)>>shift;
+                        const lUInt16 mask = (0xFF00)>>shift;
 						lUInt8 c = *dst;
 						c &= ~(mask>>8);
 						c |= (cl>>8);
