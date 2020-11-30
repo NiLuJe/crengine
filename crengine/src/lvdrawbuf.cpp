@@ -1264,14 +1264,14 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
             size_t px_count = width;
             while (px_count--)
             {
-                const lUInt8 b = (*src++);
-                if ( b == 0 ) {
+                const lUInt8 opaque = (*src++);
+                if ( opaque == 0 ) {
                     // Background pixel, NOP
-                } else if ( b == 0xFF ) {
+                } else if ( opaque == 0xFF ) {
                     *dst = color;
                 } else {
-                    const lUInt8 alpha = b ^ 0xFF;
-                    ApplyAlphaGray8( *dst, color, alpha, b );
+                    const lUInt8 alpha = opaque ^ 0xFF;
+                    ApplyAlphaGray8( *dst, color, alpha, opaque );
                 }
                 dst++;
             }
@@ -1357,12 +1357,12 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
             size_t px_count = width;
             while (px_count--)
             {
-                const lUInt8 b = (*src++);
-                if ( b ) {
-                    if ( b>=mask )
+                const lUInt8 opaque = (*src++);
+                if ( opaque ) {
+                    if ( opaque>=mask )
                         *dst = color;
                     else {
-                        const lUInt8 alpha = b ^ 0xFF;
+                        const lUInt8 alpha = opaque ^ 0xFF;
                         ApplyAlphaGray( *dst, color, alpha, _bpp );
                     }
                 }
@@ -1923,7 +1923,7 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
                 const lUInt32 opaque = ((*(src++))>>4)&0x0F;
                 if ( opaque>=0xF )
                     *dst = bmpcl16;
-                else if ( opaque>0 ) {
+                else if ( opaque!=0 ) {
                     const lUInt32 alpha = 0xF-opaque;
                     const lUInt16 cl1 = (lUInt16)(((alpha*((*dst)&0xF81F) + opaque*(bmpcl16&0xF81F))>>4) & 0xF81F);
                     const lUInt16 cl2 = (lUInt16)(((alpha*((*dst)&0x07E0) + opaque*(bmpcl16&0x07E0))>>4) & 0x07E0);
@@ -1949,7 +1949,7 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
                 const lUInt32 opaque = ((*(src++))>>1)&0x7F;
                 if ( opaque>=0x78 )
                     *dst = bmpcl32;
-                else if ( opaque>0 ) {
+                else if ( opaque!=0 ) {
                     const lUInt32 alpha = 0x7F-opaque;
                     const lUInt32 cl1 = ((alpha*((*dst)&0xFF00FF) + opaque*(bmpcl32&0xFF00FF))>>7) & 0xFF00FF;
                     const lUInt32 cl2 = ((alpha*((*dst)&0x00FF00) + opaque*(bmpcl32&0x00FF00))>>7) & 0x00FF00;
