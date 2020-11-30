@@ -122,12 +122,11 @@ static void ApplyAlphaGray( lUInt8 &dst, lUInt8 src, lUInt8 alpha, int bpp )
     }
 }
 
-static void ApplyAlphaGray8( lUInt8 &dst, lUInt8 src, lUInt8 alpha )
+static void ApplyAlphaGray8( lUInt8 &dst, lUInt8 src, lUInt8 alpha, lUInt8 opaque )
 {
     if ( alpha==0 ) {
         dst = src;
     } else if ( alpha < 255 ) {
-        lUInt8 opaque = alpha ^ 0xFF;
         lUInt8 v = ((dst * alpha + src * opaque) >> 8);
         dst = (lUInt8) v;
     }
@@ -1271,7 +1270,8 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
                 } else if ( b == 0xFF ) {
                     *dst = color;
                 } else {
-                    ApplyAlphaGray8( *dst, color, alpha );
+                    const lUInt8 alpha = b ^ 0xFF;
+                    ApplyAlphaGray8( *dst, color, alpha, b );
                 }
                 dst++;
             }
