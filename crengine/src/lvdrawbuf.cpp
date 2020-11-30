@@ -122,7 +122,6 @@ static void ApplyAlphaGray( lUInt8 &dst, lUInt8 src, lUInt8 alpha, int bpp )
     }
 }
 
-/*
 static void ApplyAlphaGray8( lUInt8 &dst, lUInt8 src, lUInt8 alpha )
 {
     if ( alpha==0 ) {
@@ -133,7 +132,6 @@ static void ApplyAlphaGray8( lUInt8 &dst, lUInt8 src, lUInt8 alpha )
         dst = (lUInt8) v;
     }
 }
-*/
 
 //static const short dither_2bpp_4x4[] = {
 //    5, 13,  8,  16,
@@ -1257,7 +1255,31 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
 //            true : false;
 //#endif
 
-    if ( _bpp==2 ) {
+    if ( _bpp==8 ) {
+        lUInt8 * dstline = _data + _rowsize*y + x;
+        const lUInt8 color = rgbToGrayMask(GetTextColor(), 8);
+        while (height--)
+        {
+            const lUInt8 * src = bitmap;
+            lUInt8 * dst = dstline;
+            size_t px_count = width;
+            while (px_count--)
+            {
+                const lUInt8 b = (*src++);
+                if ( b == 0 ) {
+                    // Background pixel, NOP
+                } else if ( b == 0xFF ) {
+                    *dst = color;
+                } else {
+                    ApplyAlphaGray8( *dst, color, alpha );
+                }
+                dst++;
+            }
+            /* next line, accounting for clipping in src and funky bitdepths in dst */
+            bitmap += bmp_width;
+            dstline += _rowsize;
+        }
+    } else if ( _bpp==2 ) {
         lUInt8 * dstline = _data + _rowsize*y + (x >> 2);
         const int shift0 = (x & 3);
         // foreground color
@@ -1324,7 +1346,7 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
             bitmap += bmp_width;
             dstline += _rowsize;
         }
-    } else { // 3,4,8
+    } else { // 3,4
         lUInt8 * dstline = _data + _rowsize*y + x;
         const lUInt8 color = rgbToGrayMask(GetTextColor(), _bpp);
         const int mask = ((1<<_bpp)-1)<<(8-_bpp);
