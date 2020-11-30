@@ -1204,16 +1204,12 @@ void LVGrayDrawBuf::DrawLine(int x0, int y0, int x1, int y1, lUInt32 color0,int 
 }
 void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int height, lUInt32 * /*palette*/)
 {
+    // NOTE: LVColorDrawBuf's variant does a _data NULL check?
     //int buf_width = _dx; /* 2bpp */
     int initial_height = height;
     int bx = 0;
     int by = 0;
-    int xx;
     int bmp_width = width;
-
-    lUInt8 * dst;
-    lUInt8 * dstline;
-    int      shift, shift0;
 
     if (x<_clip.left)
     {
@@ -1252,22 +1248,7 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
     if (height<=0)
         return;
 
-    const int bytesPerRow = _rowsize;
-    if ( _bpp==2 ) {
-        dstline = _data + bytesPerRow*y + (x >> 2);
-        shift0 = (x & 3);
-    } else if (_bpp==1) {
-        dstline = _data + bytesPerRow*y + (x >> 3);
-        shift0 = (x & 7);
-    } else {
-        dstline = _data + bytesPerRow*y + x;
-        shift0 = 0;// not used
-    }
-    dst = dstline;
-
     bitmap += bx + by*bmp_width;
-    shift = shift0;
-
 
 //    bool white = (color & 0x80) ?
 //#if (GRAY_INVERSE==1)
@@ -1275,28 +1256,31 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
 //#else
 //            true : false;
 //#endif
-    while (height--)
-    {
-        const lUInt8 * src = bitmap;
 
-        if ( _bpp==2 ) {
-            lUInt8 * dstline = dstline = _data + _rowsize*y + (x >> 2);
-            const int shift0 = (x & 3);
-            // foreground color
-            lUInt8 cl = (lUInt8)(rgbToGray(GetTextColor()) >> 6); // 0..3
-            //cl ^= 0x03;
-            for (xx = width; xx>0; --xx)
+    if ( _bpp==2 ) {
+        lUInt8 * dstline = _data + _rowsize*y + (x >> 2);
+        const int shift0 = (x & 3);
+        // foreground color
+        const lUInt8 cl = (lUInt8)(rgbToGray(GetTextColor()) >> 6); // 0..3
+        //cl ^= 0x03;
+        while (height--)
+        {
+            const lUInt8 * src = bitmap;
+            lUInt8 * dst = dstline;
+            int shift = shift0;
+            size_t px_count = width;
+            while (px_count--)
             {
-                lUInt8 opaque = (*src >> 4) & 0x0F; // 0..15
+                const lUInt8 opaque = (*src >> 4) & 0x0F; // 0..15
                 if ( opaque>0x3 ) {
-                    int shift2 = shift<<1;
-                    int shift2i = 6-shift2;
-                    lUInt8 mask = 0xC0 >> shift2;
+                    const int shift2 = shift<<1;
+                    const int shift2i = 6-shift2;
+                    const lUInt8 mask = 0xC0 >> shift2;
                     lUInt8 dstcolor;
                     if ( opaque>=0xC ) {
                         dstcolor = cl;
                     } else {
-                        lUInt8 bgcolor = ((*dst)>>shift2i)&3; // 0..3
+                        const lUInt8 bgcolor = ((*dst)>>shift2i)&3; // 0..3
                         dstcolor = ((opaque*cl + (15-opaque)*bgcolor)>>4)&3;
                     }
                     *dst = (*dst & ~mask) | (dstcolor<<shift2i);
@@ -1309,14 +1293,26 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
                     dst++;
                 }
             }
-        } else if ( _bpp==1 ) {
-            for (xx = width; xx>0; --xx)
+            /* next line, accounting for clipping in src and funky bitdepths in dst */
+            bitmap += bmp_width;
+            dstline += _rowsize;
+        }
+    } else if ( _bpp==1 ) {
+        lUInt8 * dstline = _data + _rowsize*y + (x >> 3);
+        const int shift0 = (x & 7);
+        while (height--)
+        {
+            const lUInt8 * src = bitmap;
+            lUInt8 * dst = dstline;
+            int shift = shift0;
+            size_t px_count = width;
+            while (px_count--)
             {
-#if (GRAY_INVERSE==1)
+    #if (GRAY_INVERSE==1)
                 *dst |= (( (*src++) & 0x80 ) >> ( shift ));
-#else
+    #else
                 *dst &= ~(( ((*src++) & 0x80) ) >> ( shift ));
-#endif
+    #endif
                 /* next pixel */
                 if (!(++shift & 7))
                 {
@@ -1324,10 +1320,20 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
                     dst++;
                 }
             }
-        } else { // 3,4,8
-            const lUInt8 color = rgbToGrayMask(GetTextColor(), _bpp);
-            const int mask = ((1<<_bpp)-1)<<(8-_bpp);
-            for (xx = width; xx>0; --xx)
+            /* next line, accounting for clipping in src and funky bitdepths in dst */
+            bitmap += bmp_width;
+            dstline += _rowsize;
+        }
+    } else { // 3,4,8
+        lUInt8 * dstline = _data + _rowsize*y + x;
+        const lUInt8 color = rgbToGrayMask(GetTextColor(), _bpp);
+        const int mask = ((1<<_bpp)-1)<<(8-_bpp);
+        while (height--)
+        {
+            const lUInt8 * src = bitmap;
+            lUInt8 * dst = dstline;
+            size_t px_count = width;
+            while (px_count--)
             {
                 const lUInt8 b = (*src++);
                 if ( b ) {
@@ -1340,12 +1346,10 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
                 }
                 dst++;
             }
+            /* next line, accounting for clipping in src and funky bitdepths in dst */
+            bitmap += bmp_width;
+            dstline += _rowsize;
         }
-        /* next src line, to account for clipping */
-        bitmap += bmp_width;
-        dstline += bytesPerRow;
-        dst = dstline;
-        shift = shift0;
     }
     CHECK_GUARD_BYTE;
 }
@@ -1928,7 +1932,7 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
                     *dst++ = cl1 | cl2;
                 }
             }
-            /* new src line, to account for clipping */
+            /* next src line, accounting for clipping */
             bitmap += bmp_width;
         }
     }
