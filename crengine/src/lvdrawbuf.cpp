@@ -1839,10 +1839,8 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
     int initial_height = height;
     int bx = 0;
     int by = 0;
-    int xx;
     int bmp_width = width;
-    lUInt32 bmpcl = palette?palette[0]:GetTextColor();
-    const lUInt8 * src;
+    const lUInt32 bmpcl = palette?palette[0]:GetTextColor();
 
     if (x<_clip.left)
     {
@@ -1884,77 +1882,59 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
     bitmap += bx + by*bmp_width;
 
     if ( _bpp==16 ) {
+        const lUInt16 bmpcl16 = rgb888to565(bmpcl);
 
-        lUInt16 bmpcl16 = rgb888to565(bmpcl);
-
-        lUInt16 * dst;
-        lUInt16 * dstline;
-
-
-        for (;height;height--)
+        while (height--)
         {
-            src = bitmap;
-            dstline = ((lUInt16*)GetScanLine(y++)) + x;
-            dst = dstline;
+            const lUInt8 * src = bitmap;
+            lUInt16 * dst = ((lUInt16*)GetScanLine(y++)) + x;
 
-            if ( !dst ) { // Should not happen, but avoid clang-tidy warning below
-                bitmap += bmp_width;
-                continue;
+            if ( !dst ) { // Should not happen
+                break;
             }
 
-            for (xx = width; xx>0; --xx)
+            size_t px_count == width;
+            while (px_count--)
             {
                 lUInt32 opaque = ((*(src++))>>4)&0x0F;
                 if ( opaque>=0xF )
-                    *dst = bmpcl16;
+                    *dst++ = bmpcl16;
                 else if ( opaque>0 ) {
                     lUInt32 alpha = 0xF-opaque;
                     lUInt16 cl1 = (lUInt16)(((alpha*((*dst)&0xF81F) + opaque*(bmpcl16&0xF81F))>>4) & 0xF81F);
                     lUInt16 cl2 = (lUInt16)(((alpha*((*dst)&0x07E0) + opaque*(bmpcl16&0x07E0))>>4) & 0x07E0);
-                    *dst = cl1 | cl2;
+                    *dst++ = cl1 | cl2;
                 }
-                /* next pixel */
-                dst++;
             }
-            /* new dest line */
+            /* new src line, to account for clipping */
             bitmap += bmp_width;
         }
-
     } else {
+        const lUInt32 bmpcl32 = RevRGBA(bmpcl);
 
-
-        lUInt32 bmpcl32 = RevRGBA(bmpcl);
-
-        lUInt32 * dst;
-        lUInt32 * dstline;
-
-
-        for (;height;height--)
+        while (height--)
         {
-            src = bitmap;
-            dstline = ((lUInt32*)GetScanLine(y++)) + x;
-            dst = dstline;
+            const lUInt8 * src = bitmap;
+            lUInt32 * dst = ((lUInt32*)GetScanLine(y++)) + x;
 
-            if ( !dst ) { // Should not happen, but avoid clang-tidy warning below
-                bitmap += bmp_width;
-                continue;
+            if ( !dst ) { // Should not happen
+                break;
             }
 
-            for (xx = width; xx>0; --xx)
+            size_t px_count == width;
+            while (px_count--)
             {
                 lUInt32 opaque = ((*(src++))>>1)&0x7F;
                 if ( opaque>=0x78 )
-                    *dst = bmpcl32;
+                    *dst++ = bmpcl32;
                 else if ( opaque>0 ) {
                     lUInt32 alpha = 0x7F-opaque;
                     lUInt32 cl1 = ((alpha*((*dst)&0xFF00FF) + opaque*(bmpcl32&0xFF00FF))>>7) & 0xFF00FF;
                     lUInt32 cl2 = ((alpha*((*dst)&0x00FF00) + opaque*(bmpcl32&0x00FF00))>>7) & 0x00FF00;
-                    *dst = cl1 | cl2;
+                    *dst++ = cl1 | cl2;
                 }
-                /* next pixel */
-                dst++;
             }
-            /* new dest line */
+            /* new src line, to account for clipping */
             bitmap += bmp_width;
         }
     }
