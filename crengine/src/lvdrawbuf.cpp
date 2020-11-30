@@ -2038,6 +2038,9 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
 		return;
 	}
     const int bpp = GetBitsPerPixel();
+    if (buf->GetBitsPerPixel() != bpp)
+		return; // not supported yet
+
 	if (buf->GetBitsPerPixel() == 32) {
 		// support for 32bpp to Gray drawing
 	    for (int yy=0; yy<_dy; yy++)
@@ -2107,8 +2110,7 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
 	        }
 	    }
 	    return;
-	}
-	if (buf->GetBitsPerPixel() == 16) {
+	} else if (buf->GetBitsPerPixel() == 16) {
 		// support for 32bpp to Gray drawing
 	    for (int yy=0; yy<_dy; yy++)
 	    {
@@ -2178,8 +2180,6 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
 	    }
 	    return;
 	}
-	if (buf->GetBitsPerPixel() != bpp)
-		return; // not supported yet
     for (int yy=0; yy<_dy; yy++)
     {
         if (y+yy >= clip.top && y+yy < clip.bottom)
