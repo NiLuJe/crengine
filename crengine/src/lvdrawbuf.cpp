@@ -1889,10 +1889,6 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
             const lUInt8 * src = bitmap;
             lUInt16 * dst = ((lUInt16*)GetScanLine(y++)) + x;
 
-            if ( !dst ) { // Should not happen
-                break;
-            }
-
             size_t px_count == width;
             while (px_count--)
             {
@@ -1916,10 +1912,6 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
         {
             const lUInt8 * src = bitmap;
             lUInt32 * dst = ((lUInt32*)GetScanLine(y++)) + x;
-
-            if ( !dst ) { // Should not happen
-                break;
-            }
 
             size_t px_count == width;
             while (px_count--)
