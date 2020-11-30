@@ -2929,8 +2929,6 @@ void LVColorDrawBuf::DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy,
 /// returns scanline pointer
 lUInt8 * LVColorDrawBuf::GetScanLine( int y )
 {
-    if (!_data || y<0 || y>=_dy)
-        return NULL;
 #if !defined(__SYMBIAN32__) && defined(_WIN32) && !defined(QT_GL)
     return _data + _rowsize * (_dy-1-y);
 #else
