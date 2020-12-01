@@ -83,7 +83,7 @@ static lUInt8 rgbToGrayMask( lUInt32 color, int bpp )
     return (lUInt8)color;
 }
 
-static void ApplyAlphaRGB( lUInt32 &dst, lUInt32 src, lUInt8 alpha )
+static inline void ApplyAlphaRGB( lUInt32 &dst, lUInt32 src, lUInt8 alpha )
 {
     if ( alpha == 0 ) {
         dst = src;
@@ -122,7 +122,7 @@ static void ApplyAlphaGray( lUInt8 &dst, lUInt8 src, lUInt8 alpha, int bpp )
     }
 }
 
-static void ApplyAlphaGray8( lUInt8 &dst, lUInt8 src, lUInt8 alpha, lUInt8 opaque )
+static inline void ApplyAlphaGray8( lUInt8 &dst, lUInt8 src, lUInt8 alpha, lUInt8 opaque )
 {
     if ( alpha==0 ) {
         dst = src;
