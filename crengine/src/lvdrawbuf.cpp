@@ -38,22 +38,22 @@ void LVDrawBuf::RoundRect( int x0, int y0, int x1, int y1, int borderWidth, int 
 //       Qt5 does (lUInt8) (((r*11) + (g*16) + (b*5)) >> 5) (That's closer to Rec601Luminance or Rec709Luminance IIRC)
 static lUInt32 rgbToGray( lUInt32 color )
 {
-    lUInt32 r = (0xFF0000 & color) >> 16;
-    lUInt32 g = (0x00FF00 & color) >> 8;
-    lUInt32 b = (0x0000FF & color) >> 0;
+    const lUInt32 r = (0xFF0000 & color) >> 16;
+    const lUInt32 g = (0x00FF00 & color) >> 8;
+    const lUInt32 b = (0x0000FF & color) >> 0;
     return ((r + g + g + b)>>2) & 0xFF;
 }
 
 static lUInt8 rgbToGray( lUInt32 color, int bpp )
 {
-    lUInt32 r = (0xFF0000 & color) >> 16;
-    lUInt32 g = (0x00FF00 & color) >> 8;
-    lUInt32 b = (0x0000FF & color) >> 0;
+    const lUInt32 r = (0xFF0000 & color) >> 16;
+    const lUInt32 g = (0x00FF00 & color) >> 8;
+    const lUInt32 b = (0x0000FF & color) >> 0;
     return (lUInt8)(((r + g + g + b)>>2) & (((1<<bpp)-1)<<(8-bpp)));
 }
 
 static lUInt16 rgb565(int r, int g, int b) {
-	// rrrr rggg gggb bbbb
+    // rrrr rggg gggb bbbb
     return (lUInt16)(((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3));
 }
 
@@ -117,7 +117,7 @@ static void ApplyAlphaGray( lUInt8 &dst, lUInt8 src, lUInt8 alpha, int bpp )
         const int mask = ((1 << bpp) - 1) << (8 - bpp);
         src &= mask;
         const lUInt8 opaque = alpha ^ 0xFF;
-        lUInt8 n1 = ((dst * alpha + src * opaque) >> 8) & mask;
+        const lUInt8 n1 = ((dst * alpha + src * opaque) >> 8) & mask;
         dst = n1;
     }
 }
@@ -127,8 +127,8 @@ static inline void ApplyAlphaGray8( lUInt8 &dst, lUInt8 src, lUInt8 alpha, lUInt
     if ( alpha==0 ) {
         dst = src;
     } else if ( alpha < 255 ) {
-        lUInt8 v = ((dst * alpha + src * opaque) >> 8);
-        dst = (lUInt8) v;
+        const lUInt8 v = ((dst * alpha + src * opaque) >> 8);
+        dst = v;
     }
 }
 
@@ -153,20 +153,20 @@ static const short dither_2bpp_8x8[] = {
 // returns byte with higher significant bits, lower bits are 0
 lUInt32 DitherNBitColor( lUInt32 color, lUInt32 x, lUInt32 y, int bits )
 {
-    int mask = ((1<<bits)-1)<<(8-bits);
+    const int mask = ((1<<bits)-1)<<(8-bits);
     // gray = (r + 2*g + b)>>2
     //int cl = ((((color>>16) & 255) + ((color>>(8-1)) & (255<<1)) + ((color) & 255)) >> 2) & 255;
     int cl = ((((color>>16) & 255) + ((color>>(8-1)) & (255<<1)) + ((color) & 255)) >> 2) & 255;
-    int white = (1<<bits) - 1;
-    int precision = white;
+    const int white = (1<<bits) - 1;
+    const int precision = white;
     if (cl<precision)
         return 0;
     else if (cl>=255-precision)
         return mask;
     //int d = dither_2bpp_4x4[(x&3) | ( (y&3) << 2 )] - 1;
     // dither = 0..63
-    int d = dither_2bpp_8x8[(x&7) | ( (y&7) << 3 )] - 1;
-    int shift = bits-2;
+    const int d = dither_2bpp_8x8[(x&7) | ( (y&7) << 3 )] - 1;
+    const int shift = bits-2;
     cl = ( (cl<<shift) + d - 32 ) >> shift;
     if ( cl>255 )
         cl = 255;
@@ -183,7 +183,7 @@ lUInt32 Dither2BitColor( lUInt32 color, lUInt32 x, lUInt32 y )
     else if (cl>=250)
         return 3;
     //int d = dither_2bpp_4x4[(x&3) | ( (y&3) << 2 )] - 1;
-    int d = dither_2bpp_8x8[(x&7) | ( (y&7) << 3 )] - 1;
+    const int d = dither_2bpp_8x8[(x&7) | ( (y&7) << 3 )] - 1;
 
     cl = ( cl + d - 32 );
     if (cl<5)
@@ -201,7 +201,7 @@ lUInt32 Dither1BitColor( lUInt32 color, lUInt32 x, lUInt32 y )
     else if (cl>=240)
         return 1;
     //int d = dither_2bpp_4x4[(x&3) | ( (y&3) << 2 )] - 1;
-    int d = dither_2bpp_8x8[(x&7) | ( (y&7) << 3 )] - 1;
+    const int d = dither_2bpp_8x8[(x&7) | ( (y&7) << 3 )] - 1;
 
     cl = ( cl + d - 32 );
     if (cl<5)
@@ -260,11 +260,11 @@ void LVGrayDrawBuf::Rotate( cr_rotate_angle_t angle )
         }
         return;
     }
-    int newrowsize = _bpp<=2 ? (_dy * _bpp + 7) / 8 : _dy;
+    const int newrowsize = _bpp<=2 ? (_dy * _bpp + 7) / 8 : _dy;
     sz = (newrowsize * _dx);
-    lUInt8 * dst = (lUInt8 *)calloc(sz, sizeof(*dst));
+    lUInt8 * __restrict dst = (lUInt8 *)calloc(sz, sizeof(*dst));
     for ( int y=0; y<_dy; y++ ) {
-        lUInt8 * src = _data + _rowsize*y;
+        const lUInt8 * __restrict src = _data + _rowsize*y;
         int dstx, dsty;
         for ( int x=0; x<_dx; x++ ) {
             if ( angle==CR_ROTATE_ANGLE_90 ) {
@@ -275,15 +275,15 @@ void LVGrayDrawBuf::Rotate( cr_rotate_angle_t angle )
                 dsty = _dx-1-x;
             }
             if ( _bpp==DRAW_BUF_1_BPP ) {
-                lUInt8 px = (src[ x >> 3 ] << (x&7)) & 0x80;
-                lUInt8 * dstrow = dst + newrowsize * dsty;
+                const lUInt8 px = (src[ x >> 3 ] << (x&7)) & 0x80;
+                lUInt8 * __restrict dstrow = dst + newrowsize * dsty;
                 dstrow[ dstx >> 3 ] |= (px >> (dstx&7));
             } else if (_bpp==DRAW_BUF_2_BPP ) {
-                lUInt8 px = (src[ x >> 2 ] << ((x&3)<<1)) & 0xC0;
-                lUInt8 * dstrow = dst + newrowsize * dsty;
+                const lUInt8 px = (src[ x >> 2 ] << ((x&3)<<1)) & 0xC0;
+                lUInt8 * __restrict dstrow = dst + newrowsize * dsty;
                 dstrow[ dstx >> 2 ] |= (px >> ((dstx&3)<<1));
             } else { // DRAW_BUF_3_BPP, DRAW_BUF_4_BPP, DRAW_BUF_8_BPP
-                lUInt8 * dstrow = dst + newrowsize * dsty;
+                lUInt8 * __restrict dstrow = dst + newrowsize * dsty;
                 dstrow[ dstx ] = src[ x ];
             }
         }
@@ -306,22 +306,22 @@ void LVColorDrawBuf::Rotate( cr_rotate_angle_t angle )
         if ( angle==CR_ROTATE_ANGLE_180 ) {
             lUInt16 * buf = (lUInt16 *) _data;
             for ( int i=sz/2-1; i>=0; i-- ) {
-                lUInt16 tmp = buf[i];
+                const lUInt16 tmp = buf[i];
                 buf[i] = buf[sz-i-1];
                 buf[sz-i-1] = tmp;
             }
             return;
         }
-        int newrowsize = _dy * 2;
+        const int newrowsize = _dy * 2;
         sz = (_dx * newrowsize);
-        lUInt16 * dst = (lUInt16*) malloc( sz );
+        lUInt16 * __restrict dst = (lUInt16*) malloc( sz );
     #if !defined(__SYMBIAN32__) && defined(_WIN32) && !defined(QT_GL)
-        bool cw = angle!=CR_ROTATE_ANGLE_90;
+        const bool cw = angle!=CR_ROTATE_ANGLE_90;
     #else
-        bool cw = angle==CR_ROTATE_ANGLE_90;
+        const bool cw = angle==CR_ROTATE_ANGLE_90;
     #endif
         for ( int y=0; y<_dy; y++ ) {
-            lUInt16 * src = (lUInt16*)_data + _dx*y;
+            const lUInt16 * __restrict src = (lUInt16*)_data + _dx*y;
             int nx, ny;
             if ( cw ) {
                 nx = _dy - 1 - y;
@@ -344,7 +344,7 @@ void LVColorDrawBuf::Rotate( cr_rotate_angle_t angle )
         free( _data );
         _data = (lUInt8*)dst;
     #endif
-        int tmp = _dx;
+        const int tmp = _dx;
         _dx = _dy;
         _dy = tmp;
         _rowsize = newrowsize;
@@ -353,22 +353,22 @@ void LVColorDrawBuf::Rotate( cr_rotate_angle_t angle )
         if ( angle==CR_ROTATE_ANGLE_180 ) {
             lUInt32 * buf = (lUInt32 *) _data;
             for ( int i=sz/2-1; i>=0; i-- ) {
-                lUInt32 tmp = buf[i];
+                const lUInt32 tmp = buf[i];
                 buf[i] = buf[sz-i-1];
                 buf[sz-i-1] = tmp;
             }
             return;
         }
-        int newrowsize = _dy * 4;
+        const int newrowsize = _dy * 4;
         sz = (_dx * newrowsize);
-        lUInt32 * dst = (lUInt32*) malloc( sz );
+        lUInt32 * __restrict dst = (lUInt32*) malloc( sz );
     #if !defined(__SYMBIAN32__) && defined(_WIN32) && !defined(QT_GL)
         bool cw = angle!=CR_ROTATE_ANGLE_90;
     #else
         bool cw = angle==CR_ROTATE_ANGLE_90;
     #endif
         for ( int y=0; y<_dy; y++ ) {
-            lUInt32 * src = (lUInt32*)_data + _dx*y;
+            const lUInt32 * __restrict src = (lUInt32*)_data + _dx*y;
             int nx, ny;
             if ( cw ) {
                 nx = _dy - 1 - y;
@@ -391,7 +391,7 @@ void LVColorDrawBuf::Rotate( cr_rotate_angle_t angle )
         free( _data );
         _data = (lUInt8*)dst;
     #endif
-        int tmp = _dx;
+        const int tmp = _dx;
         _dx = _dy;
         _dy = tmp;
         _rowsize = newrowsize;
