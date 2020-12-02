@@ -402,43 +402,43 @@ class LVImageScaledDrawCallback : public LVImageDecoderCallback
 {
 private:
     LVImageSourceRef src;
-    LVBaseDrawBuf * dst;
+    LVBaseDrawBuf * __restrict dst;
     int dst_x;
     int dst_y;
     int dst_dx;
     int dst_dy;
     int src_dx;
     int src_dy;
-    int * xmap;
-    int * ymap;
+    int * __restrict xmap;
+    int * __restrict ymap;
     bool dither;
     bool invert;
     bool smoothscale;
-    lUInt8 * decoded;
+    lUInt8 * __restrict decoded;
     bool isNinePatch;
 public:
-    static int * GenMap( int src_len, int dst_len )
+    static int * __restrict GenMap( int src_len, int dst_len )
     {
-        int  * map = new int[ dst_len ];
+        int * __restrict map = new int[ dst_len ];
         for (int i=0; i<dst_len; i++)
         {
             map[ i ] = i * src_len / dst_len;
         }
         return map;
     }
-    static int * GenNinePatchMap( int src_len, int dst_len, int frame1, int frame2)
+    static int * __restrict GenNinePatchMap( int src_len, int dst_len, int frame1, int frame2)
     {
-        int  * map = new int[ dst_len ];
+        int * __restrict map = new int[ dst_len ];
         if (frame1 + frame2 > dst_len) {
-            int total = frame1 + frame2;
-            int extra = total - dst_len;
-            int extra1 = frame1 * extra / total;
-            int extra2 = frame2 * extra / total;
+            const int total = frame1 + frame2;
+            const int extra = total - dst_len;
+            const int extra1 = frame1 * extra / total;
+            const int extra2 = frame2 * extra / total;
             frame1 -= extra1;
             frame2 -= extra2;
         }
         int srcm = src_len - frame1 - frame2 - 2;
-        int dstm = dst_len - frame1 - frame2;
+        const int dstm = dst_len - frame1 - frame2;
         if (srcm < 0)
             srcm = 0;
         for (int i=0; i<dst_len; i++)
@@ -448,7 +448,7 @@ public:
                 map[ i ] = i + 1;
             } else if (i >= dst_len - frame2) {
                 // end
-                int rx = i - (dst_len - frame2);
+                const int rx = i - (dst_len - frame2);
                 map[ i ] = src_len - frame2 + rx - 1;
             } else {
                 // middle
@@ -466,7 +466,7 @@ public:
     {
         src_dx = img->GetWidth();
         src_dy = img->GetHeight();
-        const CR9PatchInfo * np = img->GetNinePatchInfo();
+        const CR9PatchInfo * __restrict np = img->GetNinePatchInfo();
         isNinePatch = false;
         lvRect ninePatch;
         if (np) {
@@ -508,7 +508,7 @@ public:
     virtual void OnStartDecode( LVImageSource * )
     {
     }
-    virtual bool OnLineDecoded( LVImageSource *, int y, lUInt32 * data )
+    virtual bool OnLineDecoded( LVImageSource *, int y, lUInt32 * __restrict data )
     {
         //fprintf( stderr, "l_%d ", y );
         if (isNinePatch) {
@@ -558,16 +558,16 @@ public:
         {
             if ( yy+dst_y<clip.top || yy+dst_y>=clip.bottom )
                 continue;
-            int bpp = dst->GetBitsPerPixel();
+            const int bpp = dst->GetBitsPerPixel();
             if ( bpp >= 24 )
             {
-                lUInt32 * row = (lUInt32 *)dst->GetScanLine( yy + dst_y );
+                lUInt32 * __restrict row = (lUInt32 *)dst->GetScanLine( yy + dst_y );
                 row += dst_x;
                 for (int x=0; x<dst_dx; x++)
                 {
-                    lUInt32 cl = data[xmap ? xmap[x] : x];
-                    int xx = x + dst_x;
-                    lUInt8 alpha = (cl >> 24)&0xFF;
+                    const lUInt32 cl = data[xmap ? xmap[x] : x];
+                    const int xx = x + dst_x;
+                    const lUInt8 alpha = (cl >> 24)&0xFF;
 
                     if ( xx<clip.left || xx>=clip.right ) {
                         // OOB, don't plot it!
@@ -604,13 +604,13 @@ public:
             }
             else if ( bpp == 16 )
             {
-                lUInt16 * row = (lUInt16 *)dst->GetScanLine( yy + dst_y );
+                lUInt16 * __restrict row = (lUInt16 *)dst->GetScanLine( yy + dst_y );
                 row += dst_x;
                 for (int x=0; x<dst_dx; x++)
                 {
-                    lUInt32 cl = data[xmap ? xmap[x] : x];
-                    int xx = x + dst_x;
-                    lUInt8 alpha = (cl >> 24)&0xFF;
+                    const lUInt32 cl = data[xmap ? xmap[x] : x];
+                    const int xx = x + dst_x;
+                    const lUInt8 alpha = (cl >> 24)&0xFF;
 
                     if ( xx<clip.left || xx>=clip.right ) {
                         // OOB, don't plot it!
@@ -639,14 +639,14 @@ public:
             }
             else if ( bpp > 2 ) // 3,4,8 bpp
             {
-                lUInt8 * row = (lUInt8 *)dst->GetScanLine( yy + dst_y );
+                lUInt8 * __restrict row = (lUInt8 *)dst->GetScanLine( yy + dst_y );
                 row += dst_x;
                 for (int x=0; x<dst_dx; x++)
                 {
-                    int srcx = xmap ? xmap[x] : x;
+                    const int srcx = xmap ? xmap[x] : x;
                     lUInt32 cl = data[srcx];
-                    int xx = x + dst_x;
-                    lUInt8 alpha = (cl >> 24)&0xFF;
+                    const int xx = x + dst_x;
+                    const lUInt8 alpha = (cl >> 24)&0xFF;
 
                     if ( xx<clip.left || xx>=clip.right ) {
                         // OOB, don't plot it!
@@ -697,22 +697,22 @@ public:
             else if ( bpp == 2 )
             {
                 //fprintf( stderr, "." );
-                lUInt8 * row = (lUInt8 *)dst->GetScanLine( yy+dst_y );
+                lUInt8 * __restrict row = (lUInt8 *)dst->GetScanLine( yy+dst_y );
                 //row += dst_x;
                 for (int x=0; x<dst_dx; x++)
                 {
                     lUInt32 cl = data[xmap ? xmap[x] : x];
-                    int xx = x + dst_x;
-                    lUInt8 alpha = (cl >> 24)&0xFF;
+                    const int xx = x + dst_x;
+                    const lUInt8 alpha = (cl >> 24)&0xFF;
 
                     if ( xx<clip.left || xx>=clip.right ) {
                         // OOB, don't plot it!
                         continue;
                     }
 
-                    int byteindex = (xx >> 2);
-                    int bitindex = (3-(xx & 3))<<1;
-                    lUInt8 mask = 0xC0 >> (6 - bitindex);
+                    const int byteindex = (xx >> 2);
+                    const int bitindex = (3-(xx & 3))<<1;
+                    const lUInt8 mask = 0xC0 >> (6 - bitindex);
 
                     if ( alpha == 0xFF ) {
                         // Transparent, don't plot it...
@@ -748,13 +748,13 @@ public:
             else if ( bpp == 1 )
             {
                 //fprintf( stderr, "." );
-                lUInt8 * row = (lUInt8 *)dst->GetScanLine( yy+dst_y );
+                lUInt8 * __restrict row = (lUInt8 *)dst->GetScanLine( yy+dst_y );
                 //row += dst_x;
                 for (int x=0; x<dst_dx; x++)
                 {
                     lUInt32 cl = data[xmap ? xmap[x] : x];
-                    int xx = x + dst_x;
-                    lUInt8 alpha = (cl >> 24)&0xFF;
+                    const int xx = x + dst_x;
+                    const lUInt8 alpha = (cl >> 24)&0xFF;
 
                     if ( xx<clip.left || xx>=clip.right ) {
                         // OOB, don't plot it!
@@ -781,9 +781,9 @@ public:
                     } else {
                         dcl = rgbToGrayMask( cl ^ rgba_invert, 1 ) & 1;
                     }
-                    int byteindex = (xx >> 3);
-                    int bitindex = ((xx & 7));
-                    lUInt8 mask = 0x80 >> (bitindex);
+                    const int byteindex = (xx >> 3);
+                    const int bitindex = ((xx & 7));
+                    const lUInt8 mask = 0x80 >> (bitindex);
                     dcl = dcl << (7-bitindex);
                     row[ byteindex ] = (lUInt8)((row[ byteindex ] & (~mask)) | dcl);
                 }
@@ -803,7 +803,7 @@ public:
         }
 
         // Scale our decoded data...
-        lUInt8 * sdata = nullptr;
+        lUInt8 * __restrict sdata = nullptr;
         //fprintf( stderr, "Requesting smooth scaling (%dx%d -> %dx%d)\n", src_dx, src_dy, dst_dx, dst_dy );
         sdata = CRe::qSmoothScaleImage(decoded, src_dx, src_dy, false, dst_dx, dst_dy);
         if (sdata == nullptr) {
@@ -816,7 +816,7 @@ public:
         // Process as usual, with a bit of a hack to avoid code duplication...
         smoothscale = false;
         for (int y=0; y < dst_dy; y++) {
-            lUInt8 * row = sdata + (y * (dst_dx * 4));
+            lUInt8 * __restrict row = sdata + (y * (dst_dx * 4));
             this->OnLineDecoded( obj, y, (lUInt32 *) row );
         }
 
