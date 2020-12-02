@@ -388,7 +388,7 @@ public:
     /// inverts image in specified rectangle
     virtual void InvertRect( int x0, int y0, int x1, int y1 );
     /// fills rectangle with pattern
-    virtual void FillRectPattern( int x0, int y0, int x1, int y1, lUInt32 color0, lUInt32 color1, lUInt8 * pattern );
+    virtual void FillRectPattern( int x0, int y0, int x1, int y1, lUInt32 color0, lUInt32 color1, const lUInt8 * __restrict pattern );
     /// sets new size
     virtual void Resize( int dx, int dy );
     /// draws image

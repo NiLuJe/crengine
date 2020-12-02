@@ -867,7 +867,7 @@ lUInt32 LVGrayDrawBuf::GetPixel( int x, int y )
 {
     if (x<0 || y<0 || x>=_dx || y>=_dy)
         return 0;
-    lUInt8 * line = GetScanLine(y);
+    const lUInt8 * __restrict line = GetScanLine(y);
     if (_bpp==1) {
         // 1bpp
         if ( line[x>>3] & (0x80>>(x&7)) )
@@ -913,21 +913,21 @@ void LVGrayDrawBuf::FillRect( int x0, int y0, int x1, int y1, lUInt32 color32 )
 #if (GRAY_INVERSE==1)
     color ^= 0xFF;
 #endif
-    lUInt8 * line = GetScanLine(y0);
+    lUInt8 * __restrict line = GetScanLine(y0);
     for (int y=y0; y<y1; y++)
     {
         if (_bpp==1) {
             for (int x=x0; x<x1; x++)
             {
-                lUInt8 mask = 0x80 >> (x&7);
-                int index = x >> 3;
+                const lUInt8 mask = 0x80 >> (x&7);
+                const int index = x >> 3;
                 line[index] = (lUInt8)((line[index] & ~mask) | (color & mask));
             }
         } else if (_bpp==2) {
             for (int x=x0; x<x1; x++)
             {
-                lUInt8 mask = 0xC0 >> ((x&3)<<1);
-                int index = x >> 2;
+                const lUInt8 mask = 0xC0 >> ((x&3)<<1);
+                const int index = x >> 2;
                 line[index] = (lUInt8)((line[index] & ~mask) | (color & mask));
             }
         } else { // 3, 4, 8
@@ -938,7 +938,7 @@ void LVGrayDrawBuf::FillRect( int x0, int y0, int x1, int y1, lUInt32 color32 )
     }
 }
 
-void LVGrayDrawBuf::FillRectPattern( int x0, int y0, int x1, int y1, lUInt32 color032, lUInt32 color132, lUInt8 * pattern )
+void LVGrayDrawBuf::FillRectPattern( int x0, int y0, int x1, int y1, lUInt32 color032, lUInt32 color132, const lUInt8 * __restrict pattern )
 {
     if (x0<_clip.left)
         x0 = _clip.left;
@@ -952,30 +952,30 @@ void LVGrayDrawBuf::FillRectPattern( int x0, int y0, int x1, int y1, lUInt32 col
         return;
     lUInt8 color0 = rgbToGrayMask( color032, _bpp );
     lUInt8 color1 = rgbToGrayMask( color132, _bpp );
-    lUInt8 * line = GetScanLine(y0);
+    lUInt8 * __restrict line = GetScanLine(y0);
     for (int y=y0; y<y1; y++)
     {
-        lUInt8 patternMask = pattern[y & 3];
+        const lUInt8 patternMask = pattern[y & 3];
         if (_bpp==1) {
             for (int x=x0; x<x1; x++)
             {
-                lUInt8 patternBit = (patternMask << (x&7)) & 0x80;
-                lUInt8 mask = 0x80 >> (x&7);
-                int index = x >> 3;
+                const lUInt8 patternBit = (patternMask << (x&7)) & 0x80;
+                const lUInt8 mask = 0x80 >> (x&7);
+                const int index = x >> 3;
                 line[index] = (lUInt8)((line[index] & ~mask) | ((patternBit?color1:color0) & mask));
             }
         } else if (_bpp==2) {
             for (int x=x0; x<x1; x++)
             {
-                lUInt8 patternBit = (patternMask << (x&7)) & 0x80;
-                lUInt8 mask = 0xC0 >> ((x&3)<<1);
-                int index = x >> 2;
+                const lUInt8 patternBit = (patternMask << (x&7)) & 0x80;
+                const lUInt8 mask = 0xC0 >> ((x&3)<<1);
+                const int index = x >> 2;
                 line[index] = (lUInt8)((line[index] & ~mask) | ((patternBit?color1:color0) & mask));
             }
         } else {
             for (int x=x0; x<x1; x++)
             {
-                lUInt8 patternBit = (patternMask << (x&7)) & 0x80;
+                const lUInt8 patternBit = (patternMask << (x&7)) & 0x80;
                 line[x] = patternBit ? color1 : color0;
             }
         }
