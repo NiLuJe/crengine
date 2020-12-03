@@ -1418,7 +1418,7 @@ void LVGrayDrawBuf::ConvertToBitmap(bool flgDither)
     if (_bpp==1)
         return;
     // TODO: implement for byte per pixel mode
-    int sz = GetRowSize();
+    const size_t sz = GetRowSize();
     lUInt8 * bitmap = (lUInt8*) calloc(sz, sizeof(*bitmap));
     if (flgDither)
     {
@@ -1430,8 +1430,8 @@ void LVGrayDrawBuf::ConvertToBitmap(bool flgDither)
         };
         for (int y=0; y<_dy; y++)
         {
-            lUInt8 * src = GetScanLine(y);
-            lUInt8 * dst = bitmap + ((_dx+7)/8)*y;
+            const lUInt8 * __restrict src = GetScanLine(y);
+            lUInt8 * __restrict dst = bitmap + ((_dx+7)/8)*y;
             for (int x=0; x<_dx; x++) {
                 int cl = (src[x>>2] >> (6-((x&3)*2)))&3;
                 cl = cmap[cl][ (x&1) + ((y&1)<<1) ];
@@ -1444,10 +1444,10 @@ void LVGrayDrawBuf::ConvertToBitmap(bool flgDither)
     {
         for (int y=0; y<_dy; y++)
         {
-            lUInt8 * src = GetScanLine(y);
-            lUInt8 * dst = bitmap + ((_dx+7)/8)*y;
+            const lUInt8 * __restrict src = GetScanLine(y);
+            lUInt8 * __restrict dst = bitmap + ((_dx+7)/8)*y;
             for (int x=0; x<_dx; x++) {
-                int cl = (src[x>>2] >> (7-((x&3)*2)))&1;
+                const int cl = (src[x>>2] >> (7-((x&3)*2)))&1;
                 if (cl)
                     dst[x>>3] |= 0x80>>(x&7);
             }
@@ -1492,7 +1492,7 @@ void LVColorDrawBuf::Clear( lUInt32 color )
         const lUInt16 cl16 = rgb888to565(color);
         for (int y=0; y<_dy; y++)
         {
-            lUInt16 * dst = (lUInt16 *)GetScanLine(y);
+            lUInt16 * __restrict dst = (lUInt16 *)GetScanLine(y);
             size_t px_count = _dx;
             while (px_count--)
             {
@@ -1503,7 +1503,7 @@ void LVColorDrawBuf::Clear( lUInt32 color )
         const lUInt32 cl32 = RevRGBA(color);
         for (int y=0; y<_dy; y++)
         {
-            lUInt32 * dst = (lUInt32 *)GetScanLine(y);
+            lUInt32 * __restrict dst = (lUInt32 *)GetScanLine(y);
             size_t px_count = _dx;
             while (px_count--)
             {
@@ -1553,12 +1553,12 @@ inline static lUInt32 AARRGGBB(lUInt32 a, lUInt32 r, lUInt32 g, lUInt32 b) {
 /// get linearly interpolated pixel value (coordinates are fixed floating points *16)
 lUInt32 LVBaseDrawBuf::GetInterpolatedColor(int x16, int y16)
 {
-	int shx = x16 & 0x0F;
-	int shy = y16 & 0x0F;
-	int nshx = 16 - shx;
-	int nshy = 16 - shy;
-	int x = x16 >> 4;
-	int y = y16 >> 4;
+	const int shx = x16 & 0x0F;
+	const int shy = y16 & 0x0F;
+	const int nshx = 16 - shx;
+	const int nshy = 16 - shy;
+	const int x = x16 >> 4;
+	const int y = y16 >> 4;
 	int x1 = x + 1;
 	int y1 = y + 1;
 	if (x1 >= _dx)
@@ -1593,8 +1593,8 @@ lUInt32 LVBaseDrawBuf::GetAvgColor(lvRect & rc16)
         x0 = 0;
     if (y0 < 0)
         y0 = 0;
-    int maxxx = _dx << 4;
-    int maxyy = _dy << 4;
+    const int maxxx = _dx << 4;
+    const int maxyy = _dy << 4;
     if (x1 > maxxx)
         x1 = maxxx;
     if (y1 > maxyy)
@@ -1605,8 +1605,8 @@ lUInt32 LVBaseDrawBuf::GetAvgColor(lvRect & rc16)
     int gs = 0;
     int bs = 0;
     int s = 0;
-    int maxy = ((y1 - 1) >> 4);
-    int maxx = ((x1 - 1) >> 4);
+    const int maxy = ((y1 - 1) >> 4);
+    const int maxx = ((x1 - 1) >> 4);
     for (int y = (y0 >> 4); y <= maxy; y++ ) {
         int yy0 = y << 4;
         int yy1 = (y + 1) << 4;
@@ -1614,7 +1614,7 @@ lUInt32 LVBaseDrawBuf::GetAvgColor(lvRect & rc16)
             yy0 = y0;
         if (yy1 > y1)
             yy1 = y1;
-        int ys = yy1 - yy0; // 0..16
+        const int ys = yy1 - yy0; // 0..16
         if (ys < 1)
             continue;
         for (int x = (x0 >> 4); x <= maxx; x++ ) {
@@ -1625,16 +1625,16 @@ lUInt32 LVBaseDrawBuf::GetAvgColor(lvRect & rc16)
                 xx0 = x0;
             if (xx1 > x1)
                 xx1 = x1;
-            int xs = xx1 - xx0; // 0..16
+            const int xs = xx1 - xx0; // 0..16
             if (xs < 1)
                 continue;
 
-            int mult = xs * ys;
+            const int mult = xs * ys;
 
-            lUInt32 pixel = GetPixel(x, y);
-            int r = (pixel >> 16) & 0xFF;
-            int g = (pixel >> 8) & 0xFF;
-            int b = pixel & 0xFF;
+            const lUInt32 pixel = GetPixel(x, y);
+            const int r = (pixel >> 16) & 0xFF;
+            const int g = (pixel >> 8) & 0xFF;
+            const int b = pixel & 0xFF;
 
             rs += r * mult;
             gs += g * mult;
@@ -1664,12 +1664,12 @@ void LVColorDrawBuf::FillRect( int x0, int y0, int x1, int y1, lUInt32 color )
         y1 = _clip.bottom;
     if (x0>=x1 || y0>=y1)
         return;
-    lUInt8 alpha = (color >> 24) & 0xFF;
+    const lUInt8 alpha = (color >> 24) & 0xFF;
     if ( _bpp==16 ) {
-        lUInt16 cl16 = rgb888to565(color);
+        const lUInt16 cl16 = rgb888to565(color);
         for (int y=y0; y<y1; y++)
         {
-            lUInt16 * line = (lUInt16 *)GetScanLine(y);
+            lUInt16 * __restrict line = (lUInt16 *)GetScanLine(y);
             for (int x=x0; x<x1; x++)
             {
                 if (alpha)
@@ -1681,7 +1681,7 @@ void LVColorDrawBuf::FillRect( int x0, int y0, int x1, int y1, lUInt32 color )
     } else {
         for (int y=y0; y<y1; y++)
         {
-            lUInt32 * line = (lUInt32 *)GetScanLine(y);
+            lUInt32 * __restrict line = (lUInt32 *)GetScanLine(y);
             for (int x=x0; x<x1; x++)
             {
                 if (alpha)
@@ -1693,7 +1693,7 @@ void LVColorDrawBuf::FillRect( int x0, int y0, int x1, int y1, lUInt32 color )
     }
 }
 
-void LVColorDrawBuf::DrawLine(int x0,int y0,int x1,int y1,lUInt32 color0 ,int length1,int length2,int direction)
+void LVColorDrawBuf::DrawLine(int x0, int y0, int x1, int y1, lUInt32 color0, int length1, int length2, int direction)
 {
     if (x0<_clip.left)
         x0 = _clip.left;
@@ -1706,10 +1706,10 @@ void LVColorDrawBuf::DrawLine(int x0,int y0,int x1,int y1,lUInt32 color0 ,int le
     if (x0>=x1 || y0>=y1)
         return;
     if ( _bpp==16 ) {
-        lUInt16 cl16 = rgb888to565(color0);
+        const lUInt16 cl16 = rgb888to565(color0);
         for (int y=y0; y<y1; y++)
         {
-            lUInt16 * line = (lUInt16 *)GetScanLine(y);
+            lUInt16 * __restrict line = (lUInt16 *)GetScanLine(y);
             for (int x=x0; x<x1; x++)
             {
                 if (direction==0 &&x%(length1+length2)<length1)line[x] = cl16;
@@ -1717,13 +1717,14 @@ void LVColorDrawBuf::DrawLine(int x0,int y0,int x1,int y1,lUInt32 color0 ,int le
             }
         }
     } else {
+        const lUInt32 cl32 = RevRGBA(color0);
         for (int y=y0; y<y1; y++)
         {
-            lUInt32 * line = (lUInt32 *)GetScanLine(y);
+            lUInt32 * __restrict line = (lUInt32 *)GetScanLine(y);
             for (int x=x0; x<x1; x++)
             {
-                if (direction==0 &&x%(length1+length2)<length1)line[x] = RevRGBA(color0);
-                if (direction==1 &&y%(length1+length2)<length1)line[x] = RevRGBA(color0);
+                if (direction==0 &&x%(length1+length2)<length1)line[x] = cl32;
+                if (direction==1 &&y%(length1+length2)<length1)line[x] = cl32;
             }
         }
     }
