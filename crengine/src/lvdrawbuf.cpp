@@ -1485,6 +1485,7 @@ void LVColorDrawBuf::Draw( LVImageSourceRef img, int x, int y, int width, int he
 /// fills buffer with specified color
 void LVColorDrawBuf::Clear( lUInt32 color )
 {
+    // NOTE: Guard against _dx <= 0?
     if ( _bpp==16 ) {
         const lUInt16 cl16 = rgb888to565(color);
         for (int y=0; y<_dy; y++)
