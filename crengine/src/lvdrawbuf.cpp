@@ -1156,7 +1156,7 @@ LVGrayDrawBuf::~LVGrayDrawBuf()
     	free( _data );
     }
 }
-void LVGrayDrawBuf::DrawLine(int x0, int y0, int x1, int y1, lUInt32 color0,int length1,int length2,int direction)
+void LVGrayDrawBuf::DrawLine(int x0, int y0, int x1, int y1, lUInt32 color0, int length1, int length2, int direction)
 {
     if (x0<_clip.left)
         x0 = _clip.left;
@@ -1178,21 +1178,21 @@ void LVGrayDrawBuf::DrawLine(int x0, int y0, int x1, int y1, lUInt32 color0,int 
         if (_bpp==1) {
             for (int x=x0; x<x1; x++)
             {
-                lUInt8 * line = GetScanLine(y);
+                lUInt8 * __restrict line = GetScanLine(y);
                 if (direction==0 &&x%(length1+length2)<length1)line[x] = color;
                 if (direction==1 &&y%(length1+length2)<length1)line[x] = color;
             }
         } else if (_bpp==2) {
             for (int x=x0; x<x1; x++)
             {
-                lUInt8 * line = GetScanLine(y);
+                lUInt8 * __restrict line = GetScanLine(y);
                 if (direction==0 &&x%(length1+length2)<length1)line[x] = color;
                 if (direction==1 &&y%(length1+length2)<length1)line[x] = color;
             }
         } else { // 3, 4, 8
             for (int x=x0; x<x1; x++)
             {
-                lUInt8 * line = GetScanLine(y);
+                lUInt8 * __restrict line = GetScanLine(y);
                 if (direction==0 &&x%(length1+length2)<length1)line[x] = color;
                 if (direction==1 &&y%(length1+length2)<length1)line[x] = color;
             }
@@ -1203,10 +1203,10 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
 {
     // NOTE: LVColorDrawBuf's variant does a _data NULL check?
     //int buf_width = _dx; /* 2bpp */
-    int initial_height = height;
+    const int initial_height = height;
     int bx = 0;
     int by = 0;
-    int bmp_width = width;
+    const int bmp_width = width;
 
     if (x<_clip.left)
     {
@@ -1259,8 +1259,8 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
         const lUInt8 color = rgbToGrayMask(GetTextColor(), 8);
         while (height--)
         {
-            const lUInt8 * src = bitmap;
-            lUInt8 * dst = dstline;
+            const lUInt8 * __restrict src = bitmap;
+            lUInt8 * __restrict dst = dstline;
             size_t px_count = width;
             while (px_count--)
             {
@@ -1275,7 +1275,7 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
                 }
                 dst++;
             }
-            /* next line, accounting for clipping in src and funky bitdepths in dst */
+            /* next line, accounting for clipping in src and padding in dst */
             bitmap += bmp_width;
             dstline += _rowsize;
         }
@@ -1287,8 +1287,8 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
         //cl ^= 0x03;
         while (height--)
         {
-            const lUInt8 * src = bitmap;
-            lUInt8 * dst = dstline;
+            const lUInt8 * __restrict src = bitmap;
+            lUInt8 * __restrict dst = dstline;
             int shift = shift0;
             size_t px_count = width;
             while (px_count--)
@@ -1324,8 +1324,8 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
         const int shift0 = (x & 7);
         while (height--)
         {
-            const lUInt8 * src = bitmap;
-            lUInt8 * dst = dstline;
+            const lUInt8 * __restrict src = bitmap;
+            lUInt8 * __restrict dst = dstline;
             int shift = shift0;
             size_t px_count = width;
             while (px_count--)
@@ -1352,8 +1352,8 @@ void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int he
         const int mask = ((1<<_bpp)-1)<<(8-_bpp);
         while (height--)
         {
-            const lUInt8 * src = bitmap;
-            lUInt8 * dst = dstline;
+            const lUInt8 * __restrict src = bitmap;
+            lUInt8 * __restrict dst = dstline;
             size_t px_count = width;
             while (px_count--)
             {
@@ -1406,9 +1406,11 @@ lUInt8 * LVGrayDrawBuf::GetScanLine( int y )
 
 void LVGrayDrawBuf::Invert()
 {
-    int sz = _rowsize * _dy;
-    for (int i=sz-1; i>=0; i--)
-        _data[i] = ~_data[i];
+    unsigned char * __restrict p = _data;
+    size_t px_count = _rowsize * _dy;
+    while (px_count--) {
+        *p++ ^= 0xFF;
+    }
 }
 
 void LVGrayDrawBuf::ConvertToBitmap(bool flgDither)
