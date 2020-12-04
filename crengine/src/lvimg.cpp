@@ -1007,12 +1007,12 @@ public:
     }
     virtual bool Decode( LVImageDecoderCallback * callback );
 
-    int DecodeFromBuffer(unsigned char *buf, int buf_size, LVImageDecoderCallback * callback);
+    int DecodeFromBuffer(const unsigned char *buf, int buf_size, LVImageDecoderCallback * callback);
     //int LoadFromFile( const char * fname );
     LVGifImageSource();
     virtual ~LVGifImageSource();
     void Clear();
-    lUInt32 * GetColorTable() {
+    const lUInt32 * __restrict GetColorTable() {
         if (m_flg_gtc)
             return m_global_color_table;
         else
@@ -1036,11 +1036,11 @@ protected:
 
     unsigned char * m_buffer;
 public:
-    int DecodeFromBuffer( unsigned char * buf, int buf_size, int &bytes_read );
+    int DecodeFromBuffer( const unsigned char * buf, int buf_size, int &bytes_read );
     LVGifFrame(LVGifImageSource * pImage);
     ~LVGifFrame();
     void Clear();
-    lUInt32 * GetColorTable() {
+    const lUInt32 * __restrict GetColorTable() {
         if (m_flg_ltc)
             return m_local_color_table;
         else
@@ -1048,18 +1048,18 @@ public:
     };
     void Draw( LVImageDecoderCallback * callback )
     {
-        int w = m_pImage->GetWidth();
-        int h = m_pImage->GetHeight();
+        const int w = m_pImage->GetWidth();
+        const int h = m_pImage->GetHeight();
         if ( w<=0 || w>4096 || h<=0 || h>4096 )
             return; // wrong image width
         callback->OnStartDecode( m_pImage );
-        lUInt32 * line = new lUInt32[w];
-        int background_color = m_pImage->m_background_color;
-        int transparent_color = m_pImage->m_transparent_color;
-        bool defined_transparent = m_pImage->defined_transparent_color;
-        lUInt32 * pColorTable = GetColorTable();
+        lUInt32 * __restrict line = new lUInt32[w];
+        const int background_color = m_pImage->m_background_color;
+        const int transparent_color = m_pImage->m_transparent_color;
+        const bool defined_transparent = m_pImage->defined_transparent_color;
+        const lUInt32 * __restrict pColorTable = GetColorTable();
         int interlacePos = 0;
-        int interlaceTable[] = {8, 0, 8, 4, 4, 2, 2, 1, 1, 1}; // pairs: step, offset
+        const int interlaceTable[] = {8, 0, 8, 4, 4, 2, 2, 1, 1, 1}; // pairs: step, offset
         int dy = interlaceTable[interlacePos];
         int y = 0;
         for ( int i=0; i<h; i++ ) {
@@ -1067,9 +1067,9 @@ public:
                 line[j] = pColorTable[background_color];
             }
             if ( i >= m_top  && i < m_top+m_cy ) {
-                unsigned char * p_line = m_buffer + (i-m_top)*m_cx;
+                unsigned char * __restrict p_line = m_buffer + (i-m_top)*m_cx;
                 for ( int x=0; x<m_cx; x++ ) {
-                    unsigned char b = p_line[x];
+                    const unsigned char b = p_line[x];
                     if (b!=background_color) {
                         if (defined_transparent && b==transparent_color)
                             line[x + m_left] = 0xFF000000;
@@ -1107,7 +1107,7 @@ inline lUInt32 lRGB(lUInt32 r, lUInt32 g, lUInt32 b )
     return (r<<16)|(g<<8)|b;
 }
 
-static bool skipGifExtension(unsigned char *&buf, int buf_size) {
+static bool skipGifExtension(const unsigned char *&buf, int buf_size) {
     unsigned char * endp = buf + buf_size;
     if (*buf != '!')
         return false;
@@ -1115,7 +1115,7 @@ static bool skipGifExtension(unsigned char *&buf, int buf_size) {
     for (;;) {
         if (buf >= endp)
             return false;
-        unsigned blockSize = *buf;
+        const unsigned blockSize = *buf;
         buf++;
         if (blockSize == 0)
             return true;
@@ -1123,7 +1123,7 @@ static bool skipGifExtension(unsigned char *&buf, int buf_size) {
     }
 }
 
-int LVGifImageSource::DecodeFromBuffer(unsigned char *buf, int buf_size, LVImageDecoderCallback * callback)
+int LVGifImageSource::DecodeFromBuffer(const unsigned char *buf, int buf_size, LVImageDecoderCallback * callback)
 {
     // check GIF header (6 bytes)
     // 'GIF'
@@ -1142,7 +1142,7 @@ int LVGifImageSource::DecodeFromBuffer(unsigned char *buf, int buf_size, LVImage
         return 0; // bad version
 
     // read screen descriptor
-    unsigned char * p = buf+6;
+    const unsigned char * p = buf+6;
 
     _width = p[0] + (p[1]<<8);
     _height = p[2] + (p[3]<<8);
@@ -1160,7 +1160,7 @@ int LVGifImageSource::DecodeFromBuffer(unsigned char *buf, int buf_size, LVImage
 
     // read global color table
     if (m_flg_gtc) {
-        int m_color_count = 1<<m_bpp;
+        const int m_color_count = 1<<m_bpp;
 
         if (m_color_count*3 + (p-buf) >= buf_size)
             return 0; // error
@@ -1179,7 +1179,7 @@ int LVGifImageSource::DecodeFromBuffer(unsigned char *buf, int buf_size, LVImage
     bool res = true;
     while (res && p - buf < buf_size) {
         // search for delimiter char ','
-        int recordType = *p;
+        const int recordType = *p;
 
         //            while (*p != ',' && p-buf<buf_size)
         //                p++;
@@ -1476,10 +1476,10 @@ bool LVGifImageSource::Decode( LVImageDecoderCallback * callback )
 {
     if ( _stream.isNull() )
         return false;
-    lvsize_t sz = _stream->GetSize();
+    const lvsize_t sz = _stream->GetSize();
     if ( sz<32 )
         return false; // wrong size
-    lUInt8 * buf = new lUInt8[ sz ];
+    lUInt8 * __restrict buf = new lUInt8[ sz ];
     lvsize_t bytesRead = 0;
     bool res = true;
     _stream->SetPos(0);
@@ -1497,10 +1497,10 @@ bool LVGifImageSource::Decode( LVImageDecoderCallback * callback )
     return res;
 }
 
-int LVGifFrame::DecodeFromBuffer( unsigned char * buf, int buf_size, int &bytes_read )
+int LVGifFrame::DecodeFromBuffer( const unsigned char * buf, int buf_size, int &bytes_read )
 {
     bytes_read = 0;
-    unsigned char * p = buf;
+    const unsigned char * p = buf;
     if (*p!=',' || buf_size<=10)
         return 0; // error: no delimiter
     p++;
@@ -1531,7 +1531,7 @@ int LVGifFrame::DecodeFromBuffer( unsigned char * buf, int buf_size, int &bytes_
 
     if (m_flg_ltc) {
         // read color table
-        int m_color_count = 1<<m_bpp;
+        const int m_color_count = 1<<m_bpp;
 
         if (m_color_count*3 + (p-buf) >= buf_size)
             return 0; // error
@@ -1546,17 +1546,17 @@ int LVGifFrame::DecodeFromBuffer( unsigned char * buf, int buf_size, int &bytes_
     }
 
     // unpack image
-    unsigned char * stream_buffer = NULL;
+    unsigned char * __restrict stream_buffer = NULL;
     int stream_buffer_size = 0;
 
     int size_code = *p++;
 
     // test raster stream size
     int i;
-    int rest_buf_size = (int)(buf_size - (p-buf));
+    const int rest_buf_size = (int)(buf_size - (p-buf));
     for (i=0; i<rest_buf_size && p[i]; ) {
         // next block
-        int block_size = p[i];
+        const int block_size = p[i];
         stream_buffer_size += block_size;
         i+=block_size+1;
     }
@@ -1573,7 +1573,7 @@ int LVGifFrame::DecodeFromBuffer( unsigned char * buf, int buf_size, int &bytes_
     int sb_index = 0;
     for (i=0; p[i]; ) {
         // next block
-        int block_size = p[i];
+        const int block_size = p[i];
         for (int j=1; j<=block_size; j++) {
             stream_buffer[sb_index++] = p[i+j];
         }
