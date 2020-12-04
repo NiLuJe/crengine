@@ -2933,10 +2933,10 @@ void LVColorDrawBuf::DrawRescaled(const LVDrawBuf * __restrict src, int x, int y
 						const int srcx16 = srcdx * xx * 16 / dx;
 						const lUInt32 cl = src->GetInterpolatedColor(srcx16, srcy16);
                         if (_bpp == 16) {
-							lUInt16 * dst = (lUInt16 *)GetScanLine(y + yy);
+							lUInt16 * __restrict dst = (lUInt16 *)GetScanLine(y + yy);
 							dst[x + xx] = rgb888to565(cl);
 						} else {
-							lUInt32 * dst = (lUInt32 *)GetScanLine(y + yy);
+							lUInt32 * __restrict dst = (lUInt32 *)GetScanLine(y + yy);
 							dst[x + xx] = RevRGBA(cl);
 						}
 					}
@@ -2952,10 +2952,10 @@ void LVColorDrawBuf::DrawRescaled(const LVDrawBuf * __restrict src, int x, int y
 						srcRect.right = srcdx * (xx + 1) * 16 / dx;
 						const lUInt32 cl = src->GetAvgColor(srcRect);
                         if (_bpp == 16) {
-							lUInt16 * dst = (lUInt16 *)GetScanLine(y + yy);
+							lUInt16 * __restrict dst = (lUInt16 *)GetScanLine(y + yy);
 							dst[x + xx] = rgb888to565(cl);
 						} else {
-							lUInt32 * dst = (lUInt32 *)GetScanLine(y + yy);
+							lUInt32 * __restrict dst = (lUInt32 *)GetScanLine(y + yy);
 							dst[x + xx] = RevRGBA(cl);
 						}
 					}
