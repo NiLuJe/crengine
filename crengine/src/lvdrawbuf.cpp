@@ -2265,7 +2265,7 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * __restrict buf, int x, int y, int option
 }
 
 /// draws buffer content to another buffer doing color conversion if necessary
-void LVGrayDrawBuf::DrawOnTop( LVDrawBuf * buf, int x, int y )
+void LVGrayDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y )
 {
     lvRect clip;
     buf->GetClipRect(&clip);
@@ -2282,8 +2282,8 @@ void LVGrayDrawBuf::DrawOnTop( LVDrawBuf * buf, int x, int y )
         {
             if (y+yy >= clip.top && y+yy < clip.bottom)
             {
-                const lUInt8 * src = (lUInt8 *)GetScanLine(yy);
-                lUInt32 * dst = ((lUInt32 *)buf->GetScanLine(y+yy)) + x;
+                const lUInt8 * __restrict src = (lUInt8 *)GetScanLine(yy);
+                lUInt32 * __restrict dst = ((lUInt32 *)buf->GetScanLine(y+yy)) + x;
                 if (bpp==1)
                 {
                     int shift = x & 7;
@@ -2352,8 +2352,8 @@ void LVGrayDrawBuf::DrawOnTop( LVDrawBuf * buf, int x, int y )
         {
             if (y+yy >= clip.top && y+yy < clip.bottom)
             {
-                const lUInt8 * src = (lUInt8 *)GetScanLine(yy);
-                lUInt16 * dst = ((lUInt16 *)buf->GetScanLine(y+yy)) + x;
+                const lUInt8 * __restrict src = (lUInt8 *)GetScanLine(yy);
+                lUInt16 * __restrict dst = ((lUInt16 *)buf->GetScanLine(y+yy)) + x;
                 if (bpp==1)
                 {
                     int shift = x & 7;
@@ -2422,11 +2422,11 @@ void LVGrayDrawBuf::DrawOnTop( LVDrawBuf * buf, int x, int y )
     {
         if (y+yy >= clip.top && y+yy < clip.bottom)
         {
-            const lUInt8 * src = (lUInt8 *)GetScanLine(yy);
+            const lUInt8 * __restrict src = (lUInt8 *)GetScanLine(yy);
             if (bpp==1)
             {
-                int shift = x & 7;
-                lUInt8 * dst = buf->GetScanLine(y+yy) + (x>>3);
+                const int shift = x & 7;
+                lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + (x>>3);
                 for (int xx=0; xx<_dx; xx+=8)
                 {
                     if ( x+xx >= clip.left && x+xx < clip.right )
@@ -2451,8 +2451,8 @@ void LVGrayDrawBuf::DrawOnTop( LVDrawBuf * buf, int x, int y )
             }
             else if (bpp==2)
             {
-                int shift = (x & 3) * 2;
-                lUInt8 * dst = buf->GetScanLine(y+yy) + (x>>2);
+                const int shift = (x & 3) * 2;
+                lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + (x>>2);
                 for (int xx=0; xx<_dx; xx+=4)
                 {
                     if ( x+xx >= clip.left && x+xx < clip.right )
@@ -2477,7 +2477,7 @@ void LVGrayDrawBuf::DrawOnTop( LVDrawBuf * buf, int x, int y )
             }
             else
             {
-                lUInt8 * dst = buf->GetScanLine(y+yy) + x;
+                lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + x;
                 for (int xx=0; xx<_dx; xx++)
                 {
                     if ( x+xx >= clip.left && x+xx < clip.right )
@@ -2494,7 +2494,7 @@ void LVGrayDrawBuf::DrawOnTop( LVDrawBuf * buf, int x, int y )
 }
 
 /// draws buffer content to another buffer doing color conversion if necessary
-void LVColorDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 * palette )
+void LVColorDrawBuf::DrawTo( LVDrawBuf * __restrict buf, int x, int y, int options, const lUInt32 * __restrict palette )
 {
     CR_UNUSED(options);
     CR_UNUSED(palette);
@@ -2507,10 +2507,10 @@ void LVColorDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32
     for (int yy=0; yy<_dy; yy++) {
         if (y+yy >= clip.top && y+yy < clip.bottom) {
             if ( _bpp==16 ) {
-                const lUInt16 * src = (lUInt16 *)GetScanLine(yy);
+                const lUInt16 * __restrict src = (lUInt16 *)GetScanLine(yy);
                 if (bpp == 1) {
                     int shift = x & 7;
-                    lUInt8 * dst = buf->GetScanLine(y+yy) + (x>>3);
+                    lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + (x>>3);
                     for (int xx=0; xx<_dx; xx++) {
                         if (x + xx >= clip.left && x + xx < clip.right) {
                             //lUInt8 mask = ~((lUInt8)0xC0>>shift);
@@ -2527,7 +2527,7 @@ void LVColorDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32
                     }
                 } else if (bpp == 2) {
                     int shift = x & 3;
-                    lUInt8 * dst = buf->GetScanLine(y+yy) + (x>>2);
+                    lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + (x>>2);
                     for (int xx=0; xx < _dx; xx++) {
                         if ( x+xx >= clip.left && x+xx < clip.right ) {
                             //lUInt8 mask = ~((lUInt8)0xC0>>shift);
@@ -2543,7 +2543,7 @@ void LVColorDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32
                         src++;
                     }
                 } else if (bpp<=8) {
-                    lUInt8 * dst = buf->GetScanLine(y+yy) + x;
+                    lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + x;
                     for (int xx=0; xx<_dx; xx++) {
                         if ( x+xx >= clip.left && x+xx < clip.right ) {
                             //lUInt8 mask = ~((lUInt8)0xC0>>shift);
@@ -2553,7 +2553,7 @@ void LVColorDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32
                         src++;
                     }
                 } else if (bpp == 16) {
-                    lUInt16 * dst = ((lUInt16 *)buf->GetScanLine(y + yy)) + x;
+                    lUInt16 * __restrict dst = ((lUInt16 *)buf->GetScanLine(y + yy)) + x;
                     for (int xx=0; xx < _dx; xx++) {
                         if (x + xx >= clip.left && x + xx < clip.right) {
                             *dst = *src;
@@ -2562,7 +2562,7 @@ void LVColorDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32
                         src++;
                     }
                 } else if (bpp == 32) {
-                    lUInt32 * dst = ((lUInt32 *)buf->GetScanLine(y + yy)) + x;
+                    lUInt32 * __restrict dst = ((lUInt32 *)buf->GetScanLine(y + yy)) + x;
                     for (int xx=0; xx<_dx; xx++) {
                         if ( x+xx >= clip.left && x+xx < clip.right ) {
                             *dst = rgb565to888( *src );
@@ -2572,10 +2572,10 @@ void LVColorDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32
                     }
                 }
             } else {
-                const lUInt32 * src = (lUInt32 *)GetScanLine(yy);
+                const lUInt32 * __restrict src = (lUInt32 *)GetScanLine(yy);
                 if (bpp==1) {
                     int shift = x & 7;
-                    lUInt8 * dst = buf->GetScanLine(y+yy) + (x>>3);
+                    lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + (x>>3);
                     for (int xx=0; xx<_dx; xx++) {
                         if ( x+xx >= clip.left && x+xx < clip.right ) {
                             //lUInt8 mask = ~((lUInt8)0xC0>>shift);
@@ -2592,7 +2592,7 @@ void LVColorDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32
                     }
                 } else if (bpp==2) {
                     int shift = x & 3;
-                    lUInt8 * dst = buf->GetScanLine(y+yy) + (x>>2);
+                    lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + (x>>2);
                     for (int xx=0; xx<_dx; xx++) {
                         if ( x+xx >= clip.left && x+xx < clip.right ) {
                             //lUInt8 mask = ~((lUInt8)0xC0>>shift);
@@ -2608,7 +2608,7 @@ void LVColorDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32
                         src++;
                     }
                 } else if (bpp<=8) {
-                    lUInt8 * dst = buf->GetScanLine(y + yy) + x;
+                    lUInt8 * __restrict dst = buf->GetScanLine(y + yy) + x;
                     for (int xx=0; xx<_dx; xx++) {
                         if (x + xx >= clip.left && x + xx < clip.right) {
                             //lUInt8 mask = ~((lUInt8)0xC0>>shift);
@@ -2618,7 +2618,7 @@ void LVColorDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32
                         src++;
                     }
                 } else if (bpp == 32) {
-                    lUInt32 * dst = ((lUInt32 *)buf->GetScanLine(y + yy)) + x;
+                    lUInt32 * __restrict dst = ((lUInt32 *)buf->GetScanLine(y + yy)) + x;
                     for (int xx = 0; xx < _dx; xx++) {
                         if (x+xx >= clip.left && x + xx < clip.right) {
                             *dst = RevRGBA(*src);
@@ -2632,7 +2632,7 @@ void LVColorDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32
     }
 }
 /// draws buffer content on top of another buffer doing color conversion if necessary
-void LVColorDrawBuf::DrawOnTop( LVDrawBuf * buf, int x, int y)
+void LVColorDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y)
 {
     //
     if ( !_data )
