@@ -834,17 +834,17 @@ public:
 };
 
 
-int  LVBaseDrawBuf::GetWidth()
+int LVBaseDrawBuf::GetWidth() const
 {
     return _dx;
 }
 
-int  LVBaseDrawBuf::GetHeight()
+int  LVBaseDrawBuf::GetHeight() const
 {
     return _dy;
 }
 
-int  LVGrayDrawBuf::GetBitsPerPixel()
+int  LVGrayDrawBuf::GetBitsPerPixel() const
 {
     return _bpp;
 }
@@ -863,7 +863,7 @@ void LVGrayDrawBuf::Draw( LVImageSourceRef img, int x, int y, int width, int hei
 
 
 /// get pixel value
-lUInt32 LVGrayDrawBuf::GetPixel( int x, int y )
+lUInt32 LVGrayDrawBuf::GetPixel( int x, int y ) const
 {
     if (x<0 || y<0 || x>=_dx || y>=_dy)
         return 0;
@@ -1103,7 +1103,7 @@ void LVGrayDrawBuf::Resize( int dx, int dy )
 }
 
 /// returns white pixel value
-lUInt32 LVGrayDrawBuf::GetWhiteColor()
+lUInt32 LVGrayDrawBuf::GetWhiteColor() const
 {
     return 0xFFFFFF;
     /*
@@ -1115,7 +1115,7 @@ lUInt32 LVGrayDrawBuf::GetWhiteColor()
     */
 }
 /// returns black pixel value
-lUInt32 LVGrayDrawBuf::GetBlackColor()
+lUInt32 LVGrayDrawBuf::GetBlackColor() const
 {
     return 0;
     /*
@@ -1399,7 +1399,7 @@ void LVBaseDrawBuf::SetClipRect( const lvRect * clipRect )
     }
 }
 
-lUInt8 * LVGrayDrawBuf::GetScanLine( int y )
+lUInt8 * LVGrayDrawBuf::GetScanLine( int y ) const
 {
     return _data + _rowsize*y;
 }
@@ -1470,7 +1470,7 @@ void  LVColorDrawBuf::Invert()
 }
 
 /// get buffer bits per pixel
-int  LVColorDrawBuf::GetBitsPerPixel()
+int  LVColorDrawBuf::GetBitsPerPixel() const
 {
     return _bpp;
 }
@@ -1515,7 +1515,7 @@ void LVColorDrawBuf::Clear( lUInt32 color )
 
 
 /// get pixel value
-lUInt32 LVColorDrawBuf::GetPixel( int x, int y )
+lUInt32 LVColorDrawBuf::GetPixel( int x, int y ) const
 {
     if (!_data || y<0 || x<0 || y>=_dy || x>=_dx)
         return 0;
@@ -1551,7 +1551,7 @@ inline static lUInt32 AARRGGBB(lUInt32 a, lUInt32 r, lUInt32 g, lUInt32 b) {
 
 
 /// get linearly interpolated pixel value (coordinates are fixed floating points *16)
-lUInt32 LVBaseDrawBuf::GetInterpolatedColor(int x16, int y16)
+lUInt32 LVBaseDrawBuf::GetInterpolatedColor(int x16, int y16) const
 {
 	const int shx = x16 & 0x0F;
 	const int shy = y16 & 0x0F;
@@ -1581,7 +1581,7 @@ lUInt32 LVBaseDrawBuf::GetInterpolatedColor(int x16, int y16)
 }
 
 /// get average pixel value for area (coordinates are fixed floating points *16)
-lUInt32 LVBaseDrawBuf::GetAvgColor(lvRect & rc16)
+lUInt32 LVBaseDrawBuf::GetAvgColor(lvRect & rc16) const
 {
     if (!_data)
         return 0;
@@ -2966,7 +2966,7 @@ void LVColorDrawBuf::DrawRescaled(const LVDrawBuf * __restrict src, int x, int y
 }
 
 /// returns scanline pointer
-lUInt8 * LVColorDrawBuf::GetScanLine( int y )
+lUInt8 * LVColorDrawBuf::GetScanLine( int y ) const
 {
 #if !defined(__SYMBIAN32__) && defined(_WIN32) && !defined(QT_GL)
     return _data + _rowsize * (_dy-1-y);
@@ -2976,12 +2976,12 @@ lUInt8 * LVColorDrawBuf::GetScanLine( int y )
 }
 
 /// returns white pixel value
-lUInt32 LVColorDrawBuf::GetWhiteColor()
+lUInt32 LVColorDrawBuf::GetWhiteColor() const
 {
     return 0xFFFFFF;
 }
 /// returns black pixel value
-lUInt32 LVColorDrawBuf::GetBlackColor()
+lUInt32 LVColorDrawBuf::GetBlackColor() const
 {
     return 0x000000;
 }
