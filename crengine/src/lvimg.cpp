@@ -739,8 +739,8 @@ public:
         /* Now we can initialize the JPEG decompression object. */
         jpeg_create_decompress(&cinfo);
 
-        lUInt8 * buffer = NULL;
-        lUInt32 * row = NULL;
+        lUInt8 * __restrict buffer = NULL;
+        lUInt32 * __restrict row = NULL;
 
         if (setjmp(jerr.setjmp_buffer)) {
         	CRLog::error("JPEG setjmp error handling");
@@ -798,14 +798,14 @@ public:
                  * loop counter, so that we don't have to keep track ourselves.
                  */
                 while (cinfo.output_scanline < cinfo.output_height) {
-                    int y = cinfo.output_scanline;
+                    const int y = cinfo.output_scanline;
                     /* jpeg_read_scanlines expects an array of pointers to scanlines.
                      * Here the array is only one element long, but you could ask for
                      * more than one scanline at a time if that's more convenient.
                      */
                     (void) jpeg_read_scanlines(&cinfo, &buffer, 1);
                     /* Assume put_scanline_someplace wants a pointer and sample count. */
-                    lUInt8 * p = buffer;
+                    lUInt8 * __restrict p = buffer;
                     for (int x=0; x<(int)cinfo.output_width; x++)
                     {
                         row[x] = (((lUInt32)p[0])<<16) | (((lUInt32)p[1])<<8) | (((lUInt32)p[2])<<0);
@@ -932,12 +932,12 @@ bool LVPngImageSource::Decode( LVImageDecoderCallback * callback )
         png_set_bgr(png_ptr);
 
         png_set_interlace_handling(png_ptr);
-        png_read_update_info(png_ptr,info_ptr);//update after set
-        png_bytep *image=NULL;
-        image =  new png_bytep[height];
+        png_read_update_info(png_ptr, info_ptr);//update after set
+        png_bytep * __restrict image = NULL;
+        image = new png_bytep[height];
         for (lUInt32 i=0; i<height; i++)
-            image[i] =  new png_byte[png_get_rowbytes(png_ptr,info_ptr)];
-        png_read_image(png_ptr,image);
+            image[i] = new png_byte[png_get_rowbytes(png_ptr, info_ptr)];
+        png_read_image(png_ptr, image);
         for (lUInt32 y = 0; y < height; y++)
         {
             callback->OnLineDecoded( this, y,  (lUInt32*) image[y] );
