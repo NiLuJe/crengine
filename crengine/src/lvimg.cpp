@@ -1652,7 +1652,7 @@ public:
     virtual ~LVSvgImageSource();
     virtual void   Compact();
     virtual bool   Decode( LVImageDecoderCallback * callback );
-    int DecodeFromBuffer(unsigned char *buf, int buf_size, LVImageDecoderCallback * callback);
+    int DecodeFromBuffer(const unsigned char *buf, int buf_size, LVImageDecoderCallback * callback);
     static bool CheckPattern( const lUInt8 * buf, int len );
 };
 
@@ -1684,9 +1684,9 @@ bool LVSvgImageSource::Decode( LVImageDecoderCallback * callback )
 {
     if ( _stream.isNull() )
         return false;
-    lvsize_t sz = _stream->GetSize();
+    const lvsize_t sz = _stream->GetSize();
     // if ( sz<32 || sz>0x80000 ) return false; // do not impose (yet) a max size for svg
-    lUInt8 * buf = new lUInt8[ sz+1 ];
+    lUInt8 * __restrict buf = new lUInt8[ sz+1 ];
     lvsize_t bytesRead = 0;
     bool res = true;
     _stream->SetPos(0);
@@ -1701,11 +1701,11 @@ bool LVSvgImageSource::Decode( LVImageDecoderCallback * callback )
     return res;
 }
 
-int LVSvgImageSource::DecodeFromBuffer(unsigned char *buf, int buf_size, LVImageDecoderCallback * callback)
+int LVSvgImageSource::DecodeFromBuffer(const unsigned char *buf, int buf_size, LVImageDecoderCallback * callback)
 {
     NSVGimage *image = NULL;
     NSVGrasterizer *rast = NULL;
-    unsigned char* img = NULL;
+    unsigned char* __restrict img = NULL;
     int w, h;
     bool res = false;
 
@@ -1760,10 +1760,8 @@ int LVSvgImageSource::DecodeFromBuffer(unsigned char *buf, int buf_size, LVImage
                 nsvgRasterize(rast, image, 1, 1, 1, img, w, h, w*4); // offsets of 1 pixel, scale = 1
                 // stbi_write_png("/tmp/svg.png", w, h, 4, img, w*4); // for debug
                 callback->OnStartDecode(this);
-                lUInt32 * row = new lUInt32 [ _width ];
-                lUInt8 * p = img;
-                lUInt8 r, g, b, a, ia, blend, iblend;
-                lUInt32 ro, go, bo;
+                lUInt32 * __restrict row = new lUInt32 [ _width ];
+                lUInt8 * __restrict p = img;
                 for (int y=0; y<_height; y++) {
                     for (int x=0; x<_width; x++) {
                         // We mostly get full white or full black when using alpha channel like this:
@@ -1773,14 +1771,14 @@ int LVSvgImageSource::DecodeFromBuffer(unsigned char *buf, int buf_size, LVImage
                         // It's better to use alpha channel here to blend pixels over a white background and set opacity to full
                         // """ To perform a source-over blend between two colors that use straight alpha format:
                         //           result = (source.RGB * source.A) + (dest.RGB * (1 - source.A))        """
-                        r = (lUInt8)p[0];
-                        g = (lUInt8)p[1];
-                        b = (lUInt8)p[2];
-                        a = (lUInt8)p[3];
-                        ia = a ^ 0xFF;
-                        ro = (lUInt32)( r*a + 0xff*ia );
-                        go = (lUInt32)( g*a + 0xff*ia );
-                        bo = (lUInt32)( b*a + 0xff*ia );
+                        const lUInt8 r = (lUInt8)p[0];
+                        const lUInt8 g = (lUInt8)p[1];
+                        const lUInt8 b = (lUInt8)p[2];
+                        const lUInt8 a = (lUInt8)p[3];
+                        const lUInt8 ia = a ^ 0xFF;
+                        lUInt32 ro = (lUInt32)( r*a + 0xff*ia );
+                        lUInt32 go = (lUInt32)( g*a + 0xff*ia );
+                        lUInt32 bo = (lUInt32)( b*a + 0xff*ia );
                         // More accurate divide by 256 than just >> 8 (255 becomes 254 with just >> 8)
                         ro = (ro+1 + (ro >> 8)) >> 8;
                         go = (go+1 + (go >> 8)) >> 8;
@@ -1805,13 +1803,13 @@ int LVSvgImageSource::DecodeFromBuffer(unsigned char *buf, int buf_size, LVImage
 }
 
 // Convenience function to convert SVG image data to PNG
-unsigned char * convertSVGtoPNG(unsigned char *svg_data, int svg_data_size, float zoom_factor, int *png_data_len)
+unsigned char * convertSVGtoPNG(const unsigned char *svg_data, int svg_data_size, float zoom_factor, int *png_data_len)
 {
     NSVGimage *image = NULL;
     NSVGrasterizer *rast = NULL;
-    unsigned char* img = NULL;
+    unsigned char* __restrict img = NULL;
     int w, h, pw, ph;
-    unsigned char *png = NULL;
+    unsigned char * __restrict png = NULL;
 
     // printf("SVG: converting to PNG...\n");
     image = nsvgParse((char*)svg_data, "px", 96.0f);
@@ -1833,7 +1831,7 @@ unsigned char * convertSVGtoPNG(unsigned char *svg_data, int svg_data_size, floa
     // right and bottom pixels. We can avoid that by adding N pixels around
     // each side, by increasing width and height with 2*N here, and using
     // offsets of N in nsvgRasterize. Using zoom_factor as N gives nice results.
-    int offset = zoom_factor;
+    const int offset = zoom_factor;
     pw = w*zoom_factor + 2*offset;
     ph = h*zoom_factor + 2*offset;
     rast = nsvgCreateRasterizer();
