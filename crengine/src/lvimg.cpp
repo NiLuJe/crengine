@@ -72,8 +72,8 @@ void CR9PatchInfo::applyPadding(lvRect & dstPadding) const
 }
 
 static void fixNegative(int n[4]) {
-	int d1 = n[1] - n[0];
-	int d2 = n[3] - n[2];
+	const int d1 = n[1] - n[0];
+	const int d2 = n[3] - n[2];
 	if (d1 + d2 > 0) {
 		n[1] = n[2] = n[0] + (n[3] - n[0]) * d1 / (d1 + d2);
 	} else {
@@ -118,7 +118,7 @@ void CR9PatchInfo::calcRectangles(const lvRect & dst, const lvRect & src, lvRect
 	// fill calculated rectangles
 	for (int y = 0; y<3; y++) {
 		for (int x = 0; x < 3; x++) {
-			int i = y * 3 + x;
+			const int i = y * 3 + x;
 			srcitems[i].left = sx[x];
 			srcitems[i].right = sx[x + 1];
 			srcitems[i].top = sy[y];
@@ -560,14 +560,14 @@ public:
     ldomNode * GetSourceNode() { return _node; }
     virtual LVStream * GetSourceStream() { return NULL; }
     virtual void   Compact() { }
-    virtual int    GetWidth() { return _width; }
-    virtual int    GetHeight() { return _height; }
+    virtual int    GetWidth() const { return _width; }
+    virtual int    GetHeight() const { return _height; }
     virtual bool   Decode( LVImageDecoderCallback * callback )
     {
         if ( callback )
         {
             callback->OnStartDecode(this);
-            lUInt32 * row = new lUInt32[ _width ];
+            lUInt32 * __restrict row = new lUInt32[ _width ];
             for (int i=0; i<_height; i++)
             {
                 if ( i==0 || i==_height-1 )
@@ -596,14 +596,14 @@ public:
 class LVXPMImageSource : public LVImageSource
 {
 protected:
-    char ** _rows;
+    unsigned char ** _rows;
     lUInt32 * _palette;
     lUInt8 _pchars[128];
     int _width;
     int _height;
     int _ncolors;
 public:
-    LVXPMImageSource( const char ** data )
+    LVXPMImageSource( const unsigned char ** data )
         : _rows(NULL), _palette(NULL), _width(0), _height(0), _ncolors(0)
     {
         bool err = false;
@@ -611,17 +611,17 @@ public:
         if ( sscanf( data[0], "%d %d %d %d", &_width, &_height, &_ncolors, &charsperpixel )!=4 ) {
             err = true;
         } else if ( _width>0 && _width<255 && _height>0 && _height<255 && _ncolors>=2 && _ncolors<255 && charsperpixel == 1 ) {
-            _rows = new char * [_height];
+            _rows = new unsigned char * [_height];
             for ( int i=0; i<_height; i++ ) {
-                _rows[i] = new char[_width];
+                _rows[i] = new unsigned char[_width];
                 memcpy( _rows[i], data[i+1+_ncolors], _width );
             }
 
             _palette = new lUInt32[_ncolors];
             memset( _pchars, 0, 128 );
             for ( int cl=0; cl<_ncolors; cl++ ) {
-                const char * src = data[1+cl];
-                _pchars[((unsigned)(*src++)) & 127] = cl;
+                const unsigned char * __restrict src = data[1+cl];
+                _pchars[(*src++) & 127] = cl;
                 if ( (*src++)!=' ' || (*src++)!='c' || (*src++)!=' ' ) {
                     err = true;
                     break;
@@ -665,19 +665,19 @@ public:
     ldomNode * GetSourceNode() { return NULL; }
     virtual LVStream * GetSourceStream() { return NULL; }
     virtual void   Compact() { }
-    virtual int    GetWidth() { return _width; }
-    virtual int    GetHeight() { return _height; }
+    virtual int    GetWidth() const { return _width; }
+    virtual int    GetHeight() const { return _height; }
     virtual bool   Decode( LVImageDecoderCallback * callback )
     {
         if ( callback )
         {
             callback->OnStartDecode(this);
-            lUInt32 * row = new lUInt32[ _width ];
+            lUInt32 * __restrict row = new lUInt32[ _width ];
             for (int i=0; i<_height; i++)
             {
-                const char * src = _rows[i];
+                const unsigned char * __restrict src = _rows[i];
                 for ( int x=0; x<_width; x++ ) {
-                    row[x] = _palette[_pchars[(unsigned)src[x]]];
+                    row[x] = _palette[_pchars[src[x]]];
                 }
                 callback->OnLineDecoded(this, i, row);
             }
@@ -688,7 +688,7 @@ public:
     }
 };
 
-LVImageSourceRef LVCreateXPMImageSource( const char * data[] )
+LVImageSourceRef LVCreateXPMImageSource( const unsigned char * data[] )
 {
     LVImageSourceRef ref( new LVXPMImageSource( data ) );
     if ( ref->GetWidth()<1 )
