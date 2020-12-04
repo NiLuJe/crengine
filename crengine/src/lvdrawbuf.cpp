@@ -2643,10 +2643,10 @@ void LVColorDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y)
     for (int yy=0; yy<_dy; yy++) {
         if (y+yy >= clip.top && y+yy < clip.bottom) {
             if ( _bpp==16 ) {
-                const lUInt16 * src = (lUInt16 *)GetScanLine(yy);
+                const lUInt16 * __restrict src = (lUInt16 *)GetScanLine(yy);
                 if (bpp == 1) {
                     int shift = x & 7;
-                    lUInt8 * dst = buf->GetScanLine(y+yy) + (x>>3);
+                    lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + (x>>3);
                     for (int xx=0; xx<_dx; xx++) {
                         if (x + xx >= clip.left && x + xx < clip.right) {
                             //lUInt8 mask = ~((lUInt8)0xC0>>shift);
@@ -2663,7 +2663,7 @@ void LVColorDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y)
                     }
                 } else if (bpp == 2) {
                     int shift = x & 3;
-                    lUInt8 * dst = buf->GetScanLine(y+yy) + (x>>2);
+                    lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + (x>>2);
                     for (int xx=0; xx < _dx; xx++) {
                         if ( x+xx >= clip.left && x+xx < clip.right ) {
                             //lUInt8 mask = ~((lUInt8)0xC0>>shift);
@@ -2679,7 +2679,7 @@ void LVColorDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y)
                         src++;
                     }
                 } else if (bpp<=8) {
-                    lUInt8 * dst = buf->GetScanLine(y+yy) + x;
+                    lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + x;
                     for (int xx=0; xx<_dx; xx++) {
                         if ( x+xx >= clip.left && x+xx < clip.right ) {
                             //lUInt8 mask = ~((lUInt8)0xC0>>shift);
@@ -2689,7 +2689,7 @@ void LVColorDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y)
                         src++;
                     }
                 } else if (bpp == 16) {
-                    lUInt16 * dst = ((lUInt16 *)buf->GetScanLine(y + yy)) + x;
+                    lUInt16 * __restrict dst = ((lUInt16 *)buf->GetScanLine(y + yy)) + x;
                     for (int xx=0; xx < _dx; xx++) {
                         if (x + xx >= clip.left && x + xx < clip.right) {
                             if(src!=0) *dst = *src;
@@ -2698,7 +2698,7 @@ void LVColorDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y)
                         src++;
                     }
                 } else if (bpp == 32) {
-                    lUInt32 * dst = ((lUInt32 *)buf->GetScanLine(y + yy)) + x;
+                    lUInt32 * __restrict dst = ((lUInt32 *)buf->GetScanLine(y + yy)) + x;
                     for (int xx=0; xx<_dx; xx++) {
                         if ( x+xx >= clip.left && x+xx < clip.right ) {
                             if(src!=0) *dst = rgb565to888( *src );
@@ -2708,10 +2708,10 @@ void LVColorDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y)
                     }
                 }
             } else {
-                const lUInt32 * src = (lUInt32 *)GetScanLine(yy);
+                const lUInt32 * __restrict src = (lUInt32 *)GetScanLine(yy);
                 if (bpp==1) {
                     int shift = x & 7;
-                    lUInt8 * dst = buf->GetScanLine(y+yy) + (x>>3);
+                    lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + (x>>3);
                     for (int xx=0; xx<_dx; xx++) {
                         if ( x+xx >= clip.left && x+xx < clip.right ) {
                             //lUInt8 mask = ~((lUInt8)0xC0>>shift);
@@ -2728,7 +2728,7 @@ void LVColorDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y)
                     }
                 } else if (bpp==2) {
                     int shift = x & 3;
-                    lUInt8 * dst = buf->GetScanLine(y+yy) + (x>>2);
+                    lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + (x>>2);
                     for (int xx=0; xx<_dx; xx++) {
                         if ( x+xx >= clip.left && x+xx < clip.right ) {
                             //lUInt8 mask = ~((lUInt8)0xC0>>shift);
@@ -2744,7 +2744,7 @@ void LVColorDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y)
                         src++;
                     }
                 } else if (bpp<=8) {
-                    lUInt8 * dst = buf->GetScanLine(y + yy) + x;
+                    lUInt8 * __restrict dst = buf->GetScanLine(y + yy) + x;
                     for (int xx=0; xx<_dx; xx++) {
                         if (x + xx >= clip.left && x + xx < clip.right) {
                             //lUInt8 mask = ~((lUInt8)0xC0>>shift);
@@ -2754,7 +2754,7 @@ void LVColorDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y)
                         src++;
                     }
                 } else if (bpp == 16) {
-                    lUInt16 * dst = ((lUInt16 *)buf->GetScanLine(y + yy)) + x;
+                    lUInt16 * __restrict dst = ((lUInt16 *)buf->GetScanLine(y + yy)) + x;
                     for (int xx=0; xx < _dx; xx++) {
                         if (x + xx >= clip.left && x + xx < clip.right) {
                             if(src!=0) *dst = rgb888to565(*src);
@@ -2763,7 +2763,7 @@ void LVColorDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y)
                         src++;
                     }
                 } else if (bpp == 32) {
-                    lUInt32 * dst = ((lUInt32 *)buf->GetScanLine(y + yy)) + x;
+                    lUInt32 * __restrict dst = ((lUInt32 *)buf->GetScanLine(y + yy)) + x;
                     for (int xx = 0; xx < _dx; xx++) {
                         if (x+xx >= clip.left && x + xx < clip.right) {
                             if(*src!=0) *dst = RevRGBA(*src);
@@ -2777,7 +2777,7 @@ void LVColorDrawBuf::DrawOnTop( LVDrawBuf * __restrict buf, int x, int y)
     }
 }
 /// draws rescaled buffer content to another buffer doing color conversion if necessary
-void LVGrayDrawBuf::DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy, int options)
+void LVGrayDrawBuf::DrawRescaled(const LVDrawBuf * __restrict src, int x, int y, int dx, int dy, int options)
 {
     CR_UNUSED(options);
     if (dx < 1 || dy < 1)
@@ -2793,7 +2793,7 @@ void LVGrayDrawBuf::DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy, 
     {
         if (y+yy >= clip.top && y+yy < clip.bottom)
         {
-            lUInt8 * dst0 = (lUInt8 *)GetScanLine(y + yy);
+            lUInt8 * __restrict dst0 = (lUInt8 *)GetScanLine(y + yy);
             if (linearInterpolation) {
                 // linear interpolation
                 const int srcy16 = srcdy * yy * 16 / dy;
@@ -2807,7 +2807,7 @@ void LVGrayDrawBuf::DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy, 
                             if (alpha >= 128)
                                 continue;
                             const int shift = (xx + x) & 7;
-                            lUInt8 * dst = dst0 + ((x + xx) >> 3);
+                            lUInt8 * __restrict dst = dst0 + ((x + xx) >> 3);
                             const lUInt32 dithered = Dither1BitColor(cl, xx, yy);
                             if (dithered)
                                 *dst = (*dst) | (0x80 >> shift);
@@ -2818,7 +2818,7 @@ void LVGrayDrawBuf::DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy, 
                         {
                             if (alpha >= 128)
                                 continue;
-                            lUInt8 * dst = dst0 + ((x + xx) >> 2);
+                            lUInt8 * __restrict dst = dst0 + ((x + xx) >> 2);
                             const int shift = ((x+xx) & 3) * 2;
                             const lUInt32 dithered = Dither2BitColor(cl, xx, yy) << 6;
                             const lUInt8 b = *dst & ~(0xC0 >> shift);
@@ -2826,7 +2826,7 @@ void LVGrayDrawBuf::DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy, 
                         }
                         else
                         {
-                            lUInt8 * dst = dst0 + x + xx;
+                            lUInt8 * __restrict dst = dst0 + x + xx;
                             lUInt32 dithered;
                             if (_bpp<8)
                                 dithered = DitherNBitColor(cl, xx, yy, _bpp); // << (8 - _bpp);
@@ -2869,7 +2869,7 @@ void LVGrayDrawBuf::DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy, 
                         if (_bpp==1)
                         {
                             int shift = (x + xx) & 7;
-                            lUInt8 * dst = dst0 + ((x + xx) >> 3);
+                            lUInt8 * __restrict dst = dst0 + ((x + xx) >> 3);
                             const lUInt32 dithered = Dither1BitColor(cl, xx, yy);
                             if (dithered)
                                 *dst = (*dst) | (0x80 >> shift);
@@ -2878,7 +2878,7 @@ void LVGrayDrawBuf::DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy, 
                         }
                         else if (_bpp==2)
                         {
-                            lUInt8 * dst = dst0 + ((x + xx) >> 2);
+                            lUInt8 * __restrict dst = dst0 + ((x + xx) >> 2);
                             const int shift = x & 3;
                             const lUInt32 dithered = Dither2BitColor(cl, xx, yy) << 6;
                             const lUInt8 b = *dst & ~(0xC0 >> shift);
@@ -2886,7 +2886,7 @@ void LVGrayDrawBuf::DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy, 
                         }
                         else
                         {
-                            lUInt8 * dst = dst0 + x + xx;
+                            lUInt8 * __restrict dst = dst0 + x + xx;
                             lUInt32 dithered;
                             if (_bpp < 8)
                                 dithered = DitherNBitColor(cl, xx, yy, _bpp) << (8 - _bpp);
@@ -2913,7 +2913,7 @@ void LVGrayDrawBuf::DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy, 
 
 
 /// draws rescaled buffer content to another buffer doing color conversion if necessary
-void LVColorDrawBuf::DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy, int options)
+void LVColorDrawBuf::DrawRescaled(const LVDrawBuf * __restrict src, int x, int y, int dx, int dy, int options)
 {
     CR_UNUSED(options);
     if (dx < 1 || dy < 1)
