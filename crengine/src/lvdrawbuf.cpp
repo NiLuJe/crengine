@@ -1730,7 +1730,7 @@ void LVColorDrawBuf::DrawLine(int x0, int y0, int x1, int y1, lUInt32 color0, in
     }
 }
 /// fills rectangle with specified color
-void LVColorDrawBuf::FillRectPattern( int x0, int y0, int x1, int y1, lUInt32 color0, lUInt32 color1, lUInt8 * pattern )
+void LVColorDrawBuf::FillRectPattern( int x0, int y0, int x1, int y1, lUInt32 color0, lUInt32 color1, const lUInt8 * __restrict pattern )
 {
     if (x0<_clip.left)
         x0 = _clip.left;
@@ -1743,26 +1743,26 @@ void LVColorDrawBuf::FillRectPattern( int x0, int y0, int x1, int y1, lUInt32 co
     if (x0>=x1 || y0>=y1)
         return;
     if ( _bpp==16 ) {
-        lUInt16 cl16_0 = rgb888to565(color0);
-        lUInt16 cl16_1 = rgb888to565(color1);
+        const lUInt16 cl16_0 = rgb888to565(color0);
+        const lUInt16 cl16_1 = rgb888to565(color1);
         for (int y=y0; y<y1; y++)
         {
-            lUInt8 patternMask = pattern[y & 3];
-            lUInt16 * line = (lUInt16 *)GetScanLine(y);
+            const lUInt8 patternMask = pattern[y & 3];
+            lUInt16 * __restrict line = (lUInt16 *)GetScanLine(y);
             for (int x=x0; x<x1; x++)
             {
-                lUInt8 patternBit = (patternMask << (x&7)) & 0x80;
+                const lUInt8 patternBit = (patternMask << (x&7)) & 0x80;
                 line[x] = patternBit ? cl16_1 : cl16_0;
             }
         }
     } else {
         for (int y=y0; y<y1; y++)
         {
-            lUInt8 patternMask = pattern[y & 3];
-            lUInt32 * line = (lUInt32 *)GetScanLine(y);
+            const lUInt8 patternMask = pattern[y & 3];
+            lUInt32 * __restrict line = (lUInt32 *)GetScanLine(y);
             for (int x=x0; x<x1; x++)
             {
-                lUInt8 patternBit = (patternMask << (x&7)) & 0x80;
+                const lUInt8 patternBit = (patternMask << (x&7)) & 0x80;
                 line[x] = patternBit ? RevRGBA(color1) : RevRGBA(color0);
             }
         }

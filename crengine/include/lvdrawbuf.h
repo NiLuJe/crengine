@@ -530,7 +530,7 @@ public:
     /// fills rectangle with specified color
     virtual void FillRect( int x0, int y0, int x1, int y1, lUInt32 color );
     /// fills rectangle with pattern
-    virtual void FillRectPattern( int x0, int y0, int x1, int y1, lUInt32 color0, lUInt32 color1, lUInt8 * pattern );
+    virtual void FillRectPattern( int x0, int y0, int x1, int y1, lUInt32 color0, lUInt32 color1, const lUInt8 * __restrict pattern );
     /// inverts specified rectangle
 	virtual void InvertRect( int x0, int y0, int x1, int y1 );
     /// sets new size
