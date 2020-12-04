@@ -1846,7 +1846,7 @@ void LVColorDrawBuf::InvertRect(int x0, int y0, int x1, int y1)
 
     if (_bpp==16) {
         for (int y=y0; y<y1; y++) {
-            lUInt16 * line = (lUInt16 *)GetScanLine(y);
+            lUInt16 * __restrict line = (lUInt16 *)GetScanLine(y);
             for (int x=x0; x<x1; x++) {
                 line[x] ^= 0xFFFF;
             }
@@ -1854,7 +1854,7 @@ void LVColorDrawBuf::InvertRect(int x0, int y0, int x1, int y1)
     }
     else {
         for (int y=y0; y<y1; y++) {
-            lUInt32 * line = (lUInt32 *)GetScanLine(y);
+            lUInt32 * __restrict line = (lUInt32 *)GetScanLine(y);
             for (int x=x0; x<x1; x++) {
                 line[x] ^= 0x00FFFFFF;
             }
@@ -1863,15 +1863,15 @@ void LVColorDrawBuf::InvertRect(int x0, int y0, int x1, int y1)
 }
 
 /// draws bitmap (1 byte per pixel) using specified palette
-void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int height, lUInt32 * palette )
+void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int height, const lUInt32 * __restrict palette )
 {
     if ( !_data )
         return;
     //int buf_width = _dx; /* 2bpp */
-    int initial_height = height;
+    const int initial_height = height;
     int bx = 0;
     int by = 0;
-    int bmp_width = width;
+    const int bmp_width = width;
     const lUInt32 bmpcl = palette?palette[0]:GetTextColor();
 
     if (x<_clip.left)
@@ -1918,8 +1918,8 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
 
         while (height--)
         {
-            const lUInt8 * src = bitmap;
-            lUInt16 * dst = ((lUInt16*)GetScanLine(y++)) + x;
+            const lUInt8 * __restrict src = bitmap;
+            lUInt16 * __restrict dst = ((lUInt16*)GetScanLine(y++)) + x;
 
             size_t px_count = width;
             while (px_count--)
@@ -1945,8 +1945,8 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
 
         while (height--)
         {
-            const lUInt8 * src = bitmap;
-            lUInt32 * dst = ((lUInt32*)GetScanLine(y++)) + x;
+            const lUInt8 * __restrict src = bitmap;
+            lUInt32 * __restrict dst = ((lUInt32*)GetScanLine(y++)) + x;
 
             size_t px_count = width;
             while (px_count--)
@@ -1974,12 +1974,12 @@ void LVColorDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int h
 
 #if !defined(__SYMBIAN32__) && defined(_WIN32) && !defined(QT_GL)
 /// draws buffer content to DC doing color conversion if necessary
-void LVGrayDrawBuf::DrawTo( HDC dc, int x, int y, int options, lUInt32 * palette )
+void LVGrayDrawBuf::DrawTo( HDC dc, int x, int y, int options, const lUInt32 * __restrict palette )
 {
     if (!dc || !_data)
         return;
     LVColorDrawBuf buf( _dx, 1 );
-    lUInt32 * dst = (lUInt32 *)buf.GetScanLine(0);
+    lUInt32 * __restrict dst = (lUInt32 *)buf.GetScanLine(0);
 #if (GRAY_INVERSE==1)
     static lUInt32 def_pal_1bpp[2] = {0xFFFFFF, 0x000000};
     static lUInt32 def_pal_2bpp[4] = {0xFFFFFF, 0xAAAAAA, 0x555555, 0x000000};
@@ -1989,7 +1989,7 @@ void LVGrayDrawBuf::DrawTo( HDC dc, int x, int y, int options, lUInt32 * palette
 #endif
 	lUInt32 pal[256];
 	if ( _bpp<=8 ) {
-		int n = 1<<_bpp;
+		const int n = 1<<_bpp;
 		for ( int i=0; i<n; i++ ) {
 			int c = 255 * i / (n-1);
 			pal[i] = c | (c<<8) | (c<<16);
@@ -1999,25 +1999,25 @@ void LVGrayDrawBuf::DrawTo( HDC dc, int x, int y, int options, lUInt32 * palette
         palette = (_bpp==1) ? def_pal_1bpp : def_pal_2bpp;
     for (int yy=0; yy<_dy; yy++)
     {
-        lUInt8 * src = GetScanLine(yy);
+        lUInt8 * __restrict src = GetScanLine(yy);
         for (int xx=0; xx<_dx; xx++)
         {
             //
             if (_bpp==1)
             {
-                int shift = 7-(xx&7);
-                int x0 = xx >> 3;
+                const int shift = 7-(xx&7);
+                const int x0 = xx >> 3;
                 dst[xx] = palette[ (src[x0]>>shift) & 1];
             }
             else if (_bpp==2)
             {
-                int shift = 6-((xx&3)<<1);
-                int x0 = xx >> 2;
+                const int shift = 6-((xx&3)<<1);
+                const int x0 = xx >> 2;
                 dst[xx] = palette[ (src[x0]>>shift) & 3];
             }
             else // 3,4,8
             {
-                int index = (src[xx] >> (8-_bpp)) & ((1<<_bpp)-1);
+                const int index = (src[xx] >> (8-_bpp)) & ((1<<_bpp)-1);
                 dst[xx] = pal[ index ];
             }
         }
@@ -2027,7 +2027,7 @@ void LVGrayDrawBuf::DrawTo( HDC dc, int x, int y, int options, lUInt32 * palette
 
 
 /// draws buffer content to DC doing color conversion if necessary
-void LVColorDrawBuf::DrawTo( HDC dc, int x, int y, int options, lUInt32 * palette )
+void LVColorDrawBuf::DrawTo( HDC dc, int x, int y, int options, const lUInt32 * __restrict palette )
 {
     if (dc!=NULL && _drawdc!=NULL)
         BitBlt( dc, x, y, _dx, _dy, _drawdc, 0, 0, SRCCOPY );
@@ -2035,7 +2035,7 @@ void LVColorDrawBuf::DrawTo( HDC dc, int x, int y, int options, lUInt32 * palett
 #endif
 
 /// draws buffer content to another buffer doing color conversion if necessary
-void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 * palette )
+void LVGrayDrawBuf::DrawTo( LVDrawBuf * __restrict buf, int x, int y, int options, const lUInt32 * __restrict palette )
 {
     CR_UNUSED2(options, palette);
     lvRect clip;
@@ -2056,8 +2056,8 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
 	    {
 	        if (y+yy >= clip.top && y+yy < clip.bottom)
 	        {
-	            const lUInt8 * src = (lUInt8 *)GetScanLine(yy);
-                lUInt32 * dst = ((lUInt32 *)buf->GetScanLine(y+yy)) + x;
+	            const lUInt8 * __restrict src = (lUInt8 *)GetScanLine(yy);
+                lUInt32 * __restrict dst = ((lUInt32 *)buf->GetScanLine(y+yy)) + x;
 	            if (bpp==1)
 	            {
 	                int shift = x & 7;
@@ -2125,8 +2125,8 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
 	    {
 	        if (y+yy >= clip.top && y+yy < clip.bottom)
 	        {
-	            const lUInt8 * src = (lUInt8 *)GetScanLine(yy);
-                lUInt16 * dst = ((lUInt16 *)buf->GetScanLine(y+yy)) + x;
+	            const lUInt8 * __restrict src = (lUInt8 *)GetScanLine(yy);
+                lUInt16 * __restrict dst = ((lUInt16 *)buf->GetScanLine(y+yy)) + x;
 	            if (bpp==1)
 	            {
 	                int shift = x & 7;
@@ -2193,11 +2193,11 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
     {
         if (y+yy >= clip.top && y+yy < clip.bottom)
         {
-            const lUInt8 * src = (lUInt8 *)GetScanLine(yy);
+            const lUInt8 * __restrict src = (lUInt8 *)GetScanLine(yy);
             if (bpp==1)
             {
-                int shift = x & 7;
-                lUInt8 * dst = buf->GetScanLine(y+yy) + (x>>3);
+                const int shift = x & 7;
+                lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + (x>>3);
                 for (int xx=0; xx<_dx; xx+=8)
                 {
                     if ( x+xx >= clip.left && x+xx < clip.right )
@@ -2222,8 +2222,8 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
             }
             else if (bpp==2)
             {
-                int shift = (x & 3) * 2;
-                lUInt8 * dst = buf->GetScanLine(y+yy) + (x>>2);
+                const int shift = (x & 3) * 2;
+                lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + (x>>2);
                 for (int xx=0; xx<_dx; xx+=4)
                 {
                     if ( x+xx >= clip.left && x+xx < clip.right )
@@ -2248,7 +2248,7 @@ void LVGrayDrawBuf::DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 
             }
             else
             {
-                lUInt8 * dst = buf->GetScanLine(y+yy) + x;
+                lUInt8 * __restrict dst = buf->GetScanLine(y+yy) + x;
                 for (int xx=0; xx<_dx; xx++)
                 {
                     if ( x+xx >= clip.left && x+xx < clip.right )

@@ -364,11 +364,11 @@ public:
     /// returns black pixel value
     virtual lUInt32 GetBlackColor();
     /// draws buffer content to another buffer doing color conversion if necessary
-    virtual void DrawTo( LVDrawBuf * buf, int x, int y, int options, lUInt32 * palette );
+    virtual void DrawTo( LVDrawBuf * __restrict buf, int x, int y, int options, const lUInt32 * __restrict palette );
     // draws buffer on top of another buffer to implement background
-    virtual void DrawOnTop( LVDrawBuf * buf, int x, int y);
+    virtual void DrawOnTop( LVDrawBuf * __restrict buf, int x, int y);
     /// draws rescaled buffer content to another buffer doing color conversion if necessary
-    virtual void DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy, int options);
+    virtual void DrawRescaled(const LVDrawBuf * __restrict src, int x, int y, int dx, int dy, int options);
 #if !defined(__SYMBIAN32__) && defined(_WIN32) && !defined(QT_GL)
     /// draws buffer content to another buffer doing color conversion if necessary
     virtual void DrawTo( HDC dc, int x, int y, int options, lUInt32 * palette );
@@ -517,7 +517,7 @@ public:
     virtual void DrawRescaled(LVDrawBuf * src, int x, int y, int dx, int dy, int options);
 #if !defined(__SYMBIAN32__) && defined(_WIN32) && !defined(QT_GL)
     /// draws buffer content to another buffer doing color conversion if necessary
-    virtual void DrawTo( HDC dc, int x, int y, int options, lUInt32 * palette );
+    virtual void DrawTo( HDC dc, int x, int y, int options, const lUInt32 * __restrict palette );
 #endif
     /// invert image
     virtual void  Invert();
@@ -538,7 +538,7 @@ public:
     /// draws image
     virtual void Draw( LVImageSourceRef img, int x, int y, int width, int height, bool dither );
     /// draws bitmap (1 byte per pixel) using specified palette
-    virtual void Draw( int x, int y, const lUInt8 * bitmap, int width, int height, lUInt32 * palette );
+    virtual void Draw( int x, int y, const lUInt8 * bitmap, int width, int height, const lUInt32 * __restrict palette );
     /// returns scanline pointer
     virtual lUInt8 * GetScanLine( int y );
 
