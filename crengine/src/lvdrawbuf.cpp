@@ -1199,7 +1199,7 @@ void LVGrayDrawBuf::DrawLine(int x0, int y0, int x1, int y1, lUInt32 color0, int
         }
     }
 }
-void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int height, lUInt32 * /*palette*/)
+void LVGrayDrawBuf::Draw( int x, int y, const lUInt8 * bitmap, int width, int height, const lUInt32 * __restrict /*palette*/)
 {
     // NOTE: LVColorDrawBuf's variant does a _data NULL check?
     //int buf_width = _dx; /* 2bpp */
