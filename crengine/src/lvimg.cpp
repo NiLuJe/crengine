@@ -2002,8 +2002,8 @@ public:
 	virtual ldomNode * GetSourceNode() { return NULL; }
 	virtual LVStream * GetSourceStream() { return NULL; }
 	virtual void   Compact() { }
-	virtual int    GetWidth() { return _dst_dx; }
-	virtual int    GetHeight() { return _dst_dy; }
+	virtual int    GetWidth() const { return _dst_dx; }
+	virtual int    GetHeight() const { return _dst_dy; }
     virtual bool   Decode( LVImageDecoderCallback * callback )
 	{
 		_callback = callback;
@@ -2014,16 +2014,16 @@ public:
 	}
 };
 
-bool LVStretchImgSource::OnLineDecoded( LVImageSource * obj, int y, lUInt32 * data )
+bool LVStretchImgSource::OnLineDecoded( LVImageSource * obj, int y, lUInt32 * __restrict data )
 {
     bool res = false;
 
     switch ( _hTransform ) {
     case IMG_TRANSFORM_SPLIT:
         {
-            int right_pixels = (_src_dx-_split_x-1);
-            int first_right_pixel = _dst_dx - right_pixels;
-            int right_offset = _src_dx - _dst_dx;
+            const int right_pixels = (_src_dx-_split_x-1);
+            const int first_right_pixel = _dst_dx - right_pixels;
+            const int right_offset = _src_dx - _dst_dx;
             //int bottom_pixels = (_src_dy-_split_y-1);
             //int first_bottom_pixel = _dst_dy - bottom_pixels;
             for ( int x=0; x<_dst_dx; x++ ) {
@@ -2050,7 +2050,7 @@ bool LVStretchImgSource::OnLineDecoded( LVImageSource * obj, int y, lUInt32 * da
         break;
     case IMG_TRANSFORM_TILE:
         {
-            int offset = _src_dx - _split_x;
+            const int offset = _src_dx - _split_x;
             for ( int x=0; x<_dst_dx; x++ )
                 _line[x] = data[ (x + offset) % _src_dx];
         }
@@ -2060,7 +2060,7 @@ bool LVStretchImgSource::OnLineDecoded( LVImageSource * obj, int y, lUInt32 * da
     switch ( _vTransform ) {
     case IMG_TRANSFORM_SPLIT:
         {
-            int middle_pixels = _dst_dy - _src_dy + 1;
+            const int middle_pixels = _dst_dy - _src_dy + 1;
             if ( y < _split_y ) {
                 res = _callback->OnLineDecoded( obj, y, _line.get() );
             } else if ( y==_split_y ) {
@@ -2074,8 +2074,8 @@ bool LVStretchImgSource::OnLineDecoded( LVImageSource * obj, int y, lUInt32 * da
         break;
     case IMG_TRANSFORM_STRETCH:
         {
-            int y0 = y * _dst_dy / _src_dy;
-            int y1 = (y+1) * _dst_dy / _src_dy;
+            const int y0 = y * _dst_dy / _src_dy;
+            const int y1 = (y+1) * _dst_dy / _src_dy;
             for ( int yy=y0; yy<y1; yy++ ) {
                 res = _callback->OnLineDecoded( obj, yy, _line.get() );
             }
@@ -2089,8 +2089,8 @@ bool LVStretchImgSource::OnLineDecoded( LVImageSource * obj, int y, lUInt32 * da
         break;
     case IMG_TRANSFORM_TILE:
         {
-            int offset = _src_dy - _split_y;
-            int y0 = (y + offset) % _src_dy;
+            const int offset = _src_dy - _split_y;
+            const int y0 = (y + offset) % _src_dy;
             for ( int yy=y0; yy<_dst_dy; yy+=_src_dy ) {
                 res = _callback->OnLineDecoded( obj, yy, _line.get() );
             }
@@ -2160,13 +2160,13 @@ public:
             delete _drawbuf;
         _drawbuf = new LVColorDrawBuf(_src->GetWidth(), _src->GetHeight(), 32);
     }
-    virtual bool OnLineDecoded( LVImageSource * obj, int y, lUInt32 * data ) {
+    virtual bool OnLineDecoded( LVImageSource * obj, int y, lUInt32 * __restrict data ) {
         CR_UNUSED(obj);
-        int dx = _src->GetWidth();
+        const int dx = _src->GetWidth();
 
-        lUInt32 * row = (lUInt32*)_drawbuf->GetScanLine(y);
+        lUInt32 * __restrict row = (lUInt32*)_drawbuf->GetScanLine(y);
         for (int x = 0; x < dx; x++) {
-            lUInt32 cl = data[x];
+            const lUInt32 cl = data[x];
             row[x] = cl;
             if (((cl >> 24) & 0xFF) < 0xC0) { // count non-transparent pixels only
                 _sumR += (cl >> 16) & 0xFF;
@@ -2180,26 +2180,26 @@ public:
     }
     virtual void OnEndDecode( LVImageSource * obj, bool res)
     {
-        int dx = _src->GetWidth();
-        int dy = _src->GetHeight();
+        const int dx = _src->GetWidth();
+        const int dy = _src->GetHeight();
         // simple add
-        int ar = (((_add >> 16) & 0xFF) - 0x80) * 2;
-        int ag = (((_add >> 8) & 0xFF) - 0x80) * 2;
-        int ab = (((_add >> 0) & 0xFF) - 0x80) * 2;
+        const int ar = (((_add >> 16) & 0xFF) - 0x80) * 2;
+        const int ag = (((_add >> 8) & 0xFF) - 0x80) * 2;
+        const int ab = (((_add >> 0) & 0xFF) - 0x80) * 2;
         // fixed point * 256
-        int mr = ((_multiply >> 16) & 0xFF) << 3;
-        int mg = ((_multiply >> 8) & 0xFF) << 3;
-        int mb = ((_multiply >> 0) & 0xFF) << 3;
+        const int mr = ((_multiply >> 16) & 0xFF) << 3;
+        const int mg = ((_multiply >> 8) & 0xFF) << 3;
+        const int mb = ((_multiply >> 0) & 0xFF) << 3;
 
-        int avgR = _countPixels > 0 ? _sumR / _countPixels : 128;
-        int avgG = _countPixels > 0 ? _sumG / _countPixels : 128;
-        int avgB = _countPixels > 0 ? _sumB / _countPixels : 128;
+        const int avgR = _countPixels > 0 ? _sumR / _countPixels : 128;
+        const int avgG = _countPixels > 0 ? _sumG / _countPixels : 128;
+        const int avgB = _countPixels > 0 ? _sumB / _countPixels : 128;
 
         for (int y = 0; y < dy; y++) {
-            lUInt32 * row = (lUInt32*)_drawbuf->GetScanLine(y);
+            lUInt32 * __restrict row = (lUInt32*)_drawbuf->GetScanLine(y);
             for ( int x=0; x<dx; x++ ) {
-                lUInt32 cl = row[x];
-                lUInt32 a = cl & 0xFF000000;
+                const lUInt32 cl = row[x];
+                const lUInt32 a = cl & 0xFF000000;
                 if (a != 0xFF000000) {
                     int r = (cl >> 16) & 0xFF;
                     int g = (cl >> 8) & 0xFF;
@@ -2220,8 +2220,8 @@ public:
     virtual ldomNode * GetSourceNode() { return NULL; }
     virtual LVStream * GetSourceStream() { return NULL; }
     virtual void   Compact() { }
-    virtual int    GetWidth() { return _src->GetWidth(); }
-    virtual int    GetHeight() { return _src->GetHeight(); }
+    virtual int    GetWidth() const { return _src->GetWidth(); }
+    virtual int    GetHeight() const { return _src->GetHeight(); }
     virtual bool   Decode( LVImageDecoderCallback * callback )
     {
         _callback = callback;
