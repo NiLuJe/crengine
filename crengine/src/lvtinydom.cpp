@@ -3346,7 +3346,7 @@ bool ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &dstbuf, lUIn
         size_t const ret = ZSTD_decompressStream(dctx, &output , &input);
         if (ZSTD_isError(ret)) {
             printf("ZSTD_decompressStream() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(ret), compsize, uncompressed_size);
-            ZSTD_freeDCtx(cctx);
+            ZSTD_freeDCtx(dctx);
             free(buffOut);
             if (uncompressed_buf) {
                 free(uncompressed_buf);
@@ -3361,7 +3361,7 @@ bool ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &dstbuf, lUIn
         lastRet = ret;
     }
 
-    ZSTD_freeDCtx(cctx);
+    ZSTD_freeDCtx(dctx);
     free(buffOut);
 
     if (lastRet != 0) {
