@@ -166,7 +166,7 @@ public:
     		y1 = y + 1;
     	}
     }
-    virtual bool OnLineDecoded( LVImageSource * obj, int y, lUInt32 * data ) {
+    virtual bool OnLineDecoded( LVImageSource * obj, int y, lUInt32 * __restrict data ) {
         CR_UNUSED(obj);
         if (y == 0) {
     		decodeHLine(data, _info->frame.left, _info->frame.right);
@@ -2003,7 +2003,7 @@ public:
 		_line.reserve( _dst_dx );
         _callback->OnStartDecode(this);
 	}
-    virtual bool OnLineDecoded( LVImageSource * obj, int y, lUInt32 * data );
+    virtual bool OnLineDecoded( LVImageSource * obj, int y, lUInt32 * __restrict data );
     virtual void OnEndDecode( LVImageSource *, bool res)
 	{
 		_line.clear();
