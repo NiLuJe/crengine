@@ -608,7 +608,7 @@ public:
     {
         bool err = false;
         int charsperpixel;
-        if ( sscanf( data[0], "%d %d %d %d", &_width, &_height, &_ncolors, &charsperpixel )!=4 ) {
+        if ( sscanf( (const char *) data[0], "%d %d %d %d", &_width, &_height, &_ncolors, &charsperpixel )!=4 ) {
             err = true;
         } else if ( _width>0 && _width<255 && _height>0 && _height<255 && _ncolors>=2 && _ncolors<255 && charsperpixel == 1 ) {
             _rows = new unsigned char * [_height];
@@ -629,16 +629,16 @@ public:
                 if ( *src == '#' ) {
                     src++;
                     unsigned c;
-                    if ( sscanf(src, "%x", &c) != 1 ) {
+                    if ( sscanf((const char *) src, "%x", &c) != 1 ) {
                         err = true;
                         break;
                     }
                     _palette[cl] = (lUInt32)c;
-                } else if ( !strcmp( src, "None" ) )
+                } else if ( !strcmp( (const char *) src, "None" ) )
                     _palette[cl] = 0xFF000000;
-                else if ( !strcmp( src, "Black" ) )
+                else if ( !strcmp( (const char *) src, "Black" ) )
                     _palette[cl] = 0x000000;
-                else if ( !strcmp( src, "White" ) )
+                else if ( !strcmp( (const char *) src, "White" ) )
                     _palette[cl] = 0xFFFFFF;
                 else
                     _palette[cl] = 0x000000;
