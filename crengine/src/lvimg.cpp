@@ -739,7 +739,7 @@ public:
         /* Now we can initialize the JPEG decompression object. */
         jpeg_create_decompress(&cinfo);
 
-        lUInt8 * __restrict buffer = NULL;
+        lUInt8 * buffer = NULL;
         lUInt32 * __restrict row = NULL;
 
         if (setjmp(jerr.setjmp_buffer)) {
@@ -1108,7 +1108,7 @@ inline lUInt32 lRGB(lUInt32 r, lUInt32 g, lUInt32 b )
 }
 
 static bool skipGifExtension(const unsigned char *&buf, int buf_size) {
-    unsigned char * endp = buf + buf_size;
+    const unsigned char * endp = buf + buf_size;
     if (*buf != '!')
         return false;
     buf += 2;
