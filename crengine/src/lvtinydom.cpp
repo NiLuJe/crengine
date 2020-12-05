@@ -86,7 +86,7 @@ extern const int gDOMVersionCurrent = DOM_VERSION_CURRENT;
 
 /// change in case of incompatible changes in swap/cache file format to avoid using incompatible swap file
 // increment to force complete reload/reparsing of old file
-#define CACHE_FILE_FORMAT_VERSION "3.05.54k"
+#define CACHE_FILE_FORMAT_VERSION "3.05.55k"
 /// increment following value to force re-formatting of old book after load
 #define FORMATTING_VERSION_ID 0x0026
 
@@ -160,9 +160,6 @@ extern const int gDOMVersionCurrent = DOM_VERSION_CURRENT;
 #define WRITE_CACHE_BLOCK_COUNT (WRITE_CACHE_TOTAL_SIZE/WRITE_CACHE_BLOCK_SIZE)
 #define TEST_BLOCK_STREAM 0
 
-#define PACK_BUF_SIZE 0x10000
-#define UNPACK_BUF_SIZE 0x40000
-
 #define RECT_DATA_CHUNK_ITEMS (1<<RECT_DATA_CHUNK_ITEMS_SHIFT)
 #define RECT_DATA_CHUNK_SIZE (RECT_DATA_CHUNK_ITEMS*sizeof(lvdomElementFormatRec))
 #define RECT_DATA_CHUNK_MASK (RECT_DATA_CHUNK_ITEMS-1)
@@ -226,7 +223,14 @@ enum CacheFileBlockType {
 #include "../include/crtest.h"
 #include <stddef.h>
 #include <math.h>
+#if (USE_ZSTD == 1)
+#include <zstd.h>
+#else
 #include <zlib.h>
+
+#define PACK_BUF_SIZE 0x10000
+#define UNPACK_BUF_SIZE 0x40000
+#endif
 #define XXH_INLINE_ALL
 #include <xxhash.h>
 #include <lvtextfm.h>
@@ -3253,6 +3257,123 @@ lString8 ldomTextStorageChunk::getText( int offset )
 #endif
 
 
+#if (USE_ZSTD == 1)
+/// pack data from _buf to _compbuf
+bool ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, lUInt32 & dstsize )
+{
+    // TODO: Keep the context & buffer around (reset context, memset buffer)
+    //       c.f. examples/multiple_streaming_compression.c
+    //       In ctor/dtor? lazy?
+    //       I'm outside a class here :s (also, I suck at C++)
+    printf("ldomPack() <- %p (%zu)\n", buf, bufsize);
+
+    // c.f., ZSTD's examples/streaming_compression.c
+    size_t const buffOutSize = ZSTD_CStreamOutSize();
+    void*  const buffOut = malloc(buffOutSize);
+
+    ZSTD_CCtx* const cctx = ZSTD_createCCtx();
+    if (cctx == nullptr) {
+        free(buffOut);
+        return false;
+    }
+    // NOTE: ZSTD_CLEVEL_DEFAULT is currently 3, sane range is 1-19
+    ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel, ZSTD_CLEVEL_DEFAULT);
+    //ZSTD_CCtx_setParameter(cctx, ZSTD_c_checksumFlag, 1);
+    // Threading? (Requires libzstd built w/ threading support)
+    //ZSTD_CCtx_setParameter(cctx, ZSTD_c_nbWorkers, 4);
+
+    // Tell the compressor just how much data we need to compress
+    ZSTD_CCtx_setPledgedSrcSize(cctx, bufsize);
+
+    size_t compressed_size = 0;
+    lUInt8 *compressed_buf = NULL;
+
+    ZSTD_EndDirective const mode = ZSTD_e_end;
+    ZSTD_inBuffer input = { buf, bufsize, 0 };
+    int finished = 0;
+    do {
+        ZSTD_outBuffer output = { buffOut, buffOutSize, 0 };
+        size_t const remaining = ZSTD_compressStream2(cctx, &output, &input, mode);
+        if (ZSTD_isError(remaining)) {
+            printf("ZSTD_compressStream2() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(remaining), bufsize, compressed_size);
+            ZSTD_freeCCtx(cctx);
+            free(buffOut);
+            if (compressed_buf) {
+                free(compressed_buf);
+            }
+            return false;
+        }
+
+        compressed_buf = cr_realloc(compressed_buf, compressed_size + output.pos);
+        memcpy(compressed_buf + compressed_size, buffOut, output.pos);
+        compressed_size += output.pos;
+
+        finished = (remaining == 0);
+        printf("ldomPack(): finished? %d (current chunk: %zu; total in: %zu; total out: %zu)\n", finished, output.pos, bufsize, compressed_size);
+    } while (!finished);
+
+    ZSTD_freeCCtx(cctx);
+    free(buffOut);
+
+    dstsize = compressed_size;
+    dstbuf = compressed_buf;
+    printf("ldomPack() done: %zu -> %zu\n", bufsize, compressed_size);
+    return true;
+}
+
+/// unpack data from _compbuf to _buf
+bool ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &dstbuf, lUInt32 & dstsize  )
+{
+    printf("ldomUnpack() <- %p (%zu)\n", compbuf, compsize);
+
+    // c.f., ZSTD's examples/streaming_decompression.c
+    size_t const buffOutSize = ZSTD_DStreamOutSize();
+    void*  const buffOut = malloc(buffOutSize);
+
+    ZSTD_DCtx* const dctx = ZSTD_createDCtx();
+    if (dctx == nullptr) {
+        free(buffOut);
+        return false;
+    }
+
+    size_t uncompressed_size = 0;
+    lUInt8 *uncompressed_buf = NULL;
+
+    size_t lastRet = 0;
+    ZSTD_inBuffer input = { compbuf, compsize, 0 };
+    while (input.pos < input.size) {
+        ZSTD_outBuffer output = { buffOut, buffOutSize, 0 };
+        size_t const ret = ZSTD_decompressStream(dctx, &output , &input);
+        if (ZSTD_isError(ret)) {
+            printf("ZSTD_decompressStream() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(ret), compsize, uncompressed_size);
+            ZSTD_freeDCtx(cctx);
+            free(buffOut);
+            if (uncompressed_buf) {
+                free(uncompressed_buf);
+            }
+            return false;
+        }
+
+        uncompressed_buf = cr_realloc(uncompressed_buf, uncompressed_size + output.pos);
+        memcpy(uncompressed_buf + uncompressed_size, buffOut, output.pos);
+        uncompressed_size += output.pos;
+
+        lastRet = ret;
+    }
+
+    ZSTD_freeDCtx(cctx);
+    free(buffOut);
+
+    if (lastRet != 0) {
+        printf("ldomUnpack(): EOF before end of stream: %zu\n", lastRet);
+    }
+
+    dstsize = uncompressed_size;
+    dstbuf = uncompressed_buf;
+    printf("ldomUnpack() done: %zu -> %zu\n", compsize, uncompressed_size);
+    return true;
+}
+#else
 /// pack data from _buf to _compbuf
 bool ldomPack( const lUInt8 * buf, int bufsize, lUInt8 * &dstbuf, lUInt32 & dstsize )
 {
@@ -3337,6 +3458,7 @@ bool ldomUnpack( const lUInt8 * compbuf, int compsize, lUInt8 * &dstbuf, lUInt32
     // printf("inflate() done %d > %d\n", compsize, uncompressed_size);
     return true;
 }
+#endif
 
 void ldomTextStorageChunk::setunpacked( const lUInt8 * buf, int bufsize )
 {
