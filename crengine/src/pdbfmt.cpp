@@ -286,7 +286,7 @@ struct PluckerPreamble {
 };
 
 /// unpack data from _compbuf to _buf
-bool ldomUnpack( const lUInt8 * compbuf, int compsize, lUInt8 * &dstbuf, lUInt32 & dstsize  );
+bool ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &dstbuf, lUInt32 & dstsize  );
 
 class PDBFile;
 
