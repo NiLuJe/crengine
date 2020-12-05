@@ -2229,7 +2229,7 @@ public:
     }
 };
 
-/// creates image source which transforms colors of another image source (add RGB components (c - 0x80) * 2 from addedRGB first, then multiplyed by multiplyRGB fixed point components (0x20 is 1.0f)
+/// creates image source which transforms colors of another image source (add RGB components (c - 0x80) * 2 from addedRGB first, then multiplied by multiplyRGB fixed point components (0x20 is 1.0f)
 LVImageSourceRef LVCreateColorTransformImageSource(LVImageSourceRef srcImage, lUInt32 addRGB, lUInt32 multiplyRGB) {
     return LVImageSourceRef(new LVColorTransformImgSource(srcImage, addRGB, multiplyRGB));
 }
@@ -2253,9 +2253,9 @@ public:
     {
         _callback->OnStartDecode(this);
     }
-    virtual bool OnLineDecoded( LVImageSource * obj, int y, lUInt32 * data ) {
+    virtual bool OnLineDecoded( LVImageSource * obj, int y, lUInt32 * __restrict data ) {
         CR_UNUSED(obj);
-        int dx = _src->GetWidth();
+        const int dx = _src->GetWidth();
 
         for (int x = 0; x < dx; x++) {
             lUInt32 cl = data[x];
@@ -2276,8 +2276,8 @@ public:
     virtual ldomNode * GetSourceNode() { return NULL; }
     virtual LVStream * GetSourceStream() { return NULL; }
     virtual void   Compact() { }
-    virtual int    GetWidth() { return _src->GetWidth(); }
-    virtual int    GetHeight() { return _src->GetHeight(); }
+    virtual int    GetWidth() const { return _src->GetWidth(); }
+    virtual int    GetHeight() const { return _src->GetHeight(); }
     virtual bool   Decode( LVImageDecoderCallback * callback )
     {
         _callback = callback;
@@ -2328,35 +2328,35 @@ public:
     // aaaaaaaarrrrrrrrggggggggbbbbbbbb -> yyyyyyaa
     inline lUInt8 grayPack( lUInt32 pixel )
     {
-        lUInt8 gray = (lUInt8)(( (pixel & 0xFF) + ((pixel>>16) & 0xFF) + ((pixel>>7)&510) ) >> 2);
-        lUInt8 alpha = (lUInt8)((pixel>>24) & 0xFF);
+        const lUInt8 gray = (lUInt8)(( (pixel & 0xFF) + ((pixel>>16) & 0xFF) + ((pixel>>7)&510) ) >> 2);
+        const lUInt8 alpha = (lUInt8)((pixel>>24) & 0xFF);
         return (gray & 0xFC) | ((alpha >> 6) & 3);
     }
     // yyyyyyaa -> aaaaaaaarrrrrrrrggggggggbbbbbbbb
     inline lUInt32 grayUnpack( lUInt8 pixel )
     {
-        lUInt32 gray = pixel & 0xFC;
+        const lUInt32 gray = pixel & 0xFC;
         lUInt32 alpha = (pixel & 3) << 6;
         if ( alpha==0xC0 )
             alpha = 0xFF;
         return gray | (gray<<8) | (gray<<16) | (alpha<<24);
     }
-    virtual bool OnLineDecoded( LVImageSource *, int y, lUInt32 * data )
+    virtual bool OnLineDecoded( LVImageSource *, int y, lUInt32 * __restrict data )
     {
         if ( y<0 || y>=_dy )
             return false;
         if ( _isGray ) {
-            lUInt8 * dst = _grayImage + _dx * y;
+            lUInt8 * __restrict dst = _grayImage + _dx * y;
             for ( int x=0; x<_dx; x++ ) {
                 dst[x] = grayPack( data[x] );
             }
         } else if ( _bpp==16 ) {
-            lUInt16 * dst = _colorImage16 + _dx * y;
+            lUInt16 * __restrict dst = _colorImage16 + _dx * y;
             for ( int x=0; x<_dx; x++ ) {
                 dst[x] = rgb888to565( data[x] );
             }
         } else {
-            lUInt32 * dst = _colorImage + _dx * y;
+            lUInt32 * __restrict dst = _colorImage + _dx * y;
             memcpy( dst, data, sizeof(lUInt32) * _dx );
         }
         return true;
@@ -2368,8 +2368,8 @@ public:
     virtual ldomNode * GetSourceNode() { return NULL; }
     virtual LVStream * GetSourceStream() { return NULL; }
     virtual void   Compact() { }
-    virtual int    GetWidth() { return _dx; }
-    virtual int    GetHeight() { return _dy; }
+    virtual int    GetWidth() const { return _dx; }
+    virtual int    GetHeight() const { return _dy; }
     virtual bool   Decode( LVImageDecoderCallback * callback )
     {
         callback->OnStartDecode( this );
@@ -2379,8 +2379,8 @@ public:
             LVArray<lUInt32> line;
             line.reserve( _dx );
             for ( int y=0; y<_dy; y++ ) {
-                lUInt8 * src = _grayImage + _dx * y;
-                lUInt32 * dst = line.ptr();
+                lUInt8 * __restrict src = _grayImage + _dx * y;
+                lUInt32 * __restrict dst = line.ptr();
                 for ( int x=0; x<_dx; x++ )
                     dst[x] = grayUnpack( src[x] );
                 callback->OnLineDecoded( this, y, dst );
@@ -2391,8 +2391,8 @@ public:
             LVArray<lUInt32> line;
             line.reserve( _dx );
             for ( int y=0; y<_dy; y++ ) {
-                lUInt16 * src = _colorImage16 + _dx * y;
-                lUInt32 * dst = line.ptr();
+                lUInt16 * __restrict src = _colorImage16 + _dx * y;
+                lUInt32 * __restrict dst = line.ptr();
                 for ( int x=0; x<_dx; x++ )
                     dst[x] = rgb565to888( src[x] );
                 callback->OnLineDecoded( this, y, dst );
@@ -2436,8 +2436,8 @@ public:
     virtual ldomNode * GetSourceNode() { return NULL; }
     virtual LVStream * GetSourceStream() { return NULL; }
     virtual void   Compact() { }
-    virtual int    GetWidth() { return _dx; }
-    virtual int    GetHeight() { return _dy; }
+    virtual int    GetWidth() const { return _dx; }
+    virtual int    GetHeight() const { return _dy; }
     virtual bool   Decode( LVImageDecoderCallback * callback )
     {
         callback->OnStartDecode( this );
@@ -2449,9 +2449,9 @@ public:
             }
         } else {
             // 16 bpp
-            lUInt32 * row = new lUInt32[_dx];
+            lUInt32 * __restrict row = new lUInt32[_dx];
             for ( int y=0; y<_dy; y++ ) {
-                lUInt16 * src = (lUInt16 *)_buf->GetScanLine(y);
+                lUInt16 *__restrict src = (lUInt16 *)_buf->GetScanLine(y);
                 for ( int x=0; x<_dx; x++ )
                     row[x] = rgb565to888(src[x]);
                 callback->OnLineDecoded( this, y, row );
@@ -2473,9 +2473,9 @@ LVImageSourceRef LVCreateUnpackedImageSource( LVImageSourceRef srcImage, int max
 {
     if ( srcImage.isNull() )
         return srcImage;
-    int dx = srcImage->GetWidth();
-    int dy = srcImage->GetHeight();
-    int sz = dx*dy * (gray?1:4);
+    const int dx = srcImage->GetWidth();
+    const int dy = srcImage->GetHeight();
+    const int sz = dx*dy * (gray?1:4);
     if ( sz>maxSize )
         return srcImage;
     CRLog::trace("Unpacking image %dx%d (%d)", dx, dy, sz);
@@ -2489,9 +2489,9 @@ LVImageSourceRef LVCreateUnpackedImageSource( LVImageSourceRef srcImage, int max
 {
     if ( srcImage.isNull() )
         return srcImage;
-    int dx = srcImage->GetWidth();
-    int dy = srcImage->GetHeight();
-    int sz = dx*dy * (bpp>>3);
+    const int dx = srcImage->GetWidth();
+    const int dy = srcImage->GetHeight();
+    const int sz = dx*dy * (bpp>>3);
     if ( sz>maxSize )
         return srcImage;
     CRLog::trace("Unpacking image %dx%d (%d)", dx, dy, sz);
@@ -2517,8 +2517,8 @@ void LVDrawBatteryIcon( LVDrawBuf * drawbuf, const lvRect & batteryRc, int perce
         int iconIndex = 0;
         if ( !charging ) {
             if ( icons.length()>2 ) {
-                int numTicks = icons.length() - 1;
-                int perTick = 10000/(numTicks -1);
+                const int numTicks = icons.length() - 1;
+                const int perTick = 10000/(numTicks -1);
                 //iconIndex = ((numTicks - 1) * percent + (100/numTicks/2) )/ 100 + 1;
                 iconIndex = (percent * 100 + perTick/2)/perTick + 1;
                 if ( iconIndex<1 )
@@ -2555,12 +2555,12 @@ void LVDrawBatteryIcon( LVDrawBuf * drawbuf, const lvRect & batteryRc, int perce
             txt = "+++";
         else
             txt = lString32::itoa(percent); // + U"%";
-        int w = font->getTextWidth(txt.c_str(), txt.length());
-        int h = font->getHeight();
-        int x = (rc.left + rc.right - w)/2;
-        int y = (rc.top + rc.bottom - h)/2+1;
-        lUInt32 bgcolor = drawbuf->GetBackgroundColor();
-        lUInt32 textcolor = drawbuf->GetTextColor();
+        const int w = font->getTextWidth(txt.c_str(), txt.length());
+        const int h = font->getHeight();
+        const int x = (rc.left + rc.right - w)/2;
+        const int y = (rc.top + rc.bottom - h)/2+1;
+        const lUInt32 bgcolor = drawbuf->GetBackgroundColor();
+        const lUInt32 textcolor = drawbuf->GetTextColor();
 
         drawbuf->SetBackgroundColor( textcolor );
         drawbuf->SetTextColor( bgcolor );
