@@ -104,7 +104,7 @@ LVImageSourceRef LVCreateStretchFilledTransform( LVImageSourceRef src, int newWi
 /// creates image which fills area with tiled copy
 LVImageSourceRef LVCreateTileTransform( LVImageSourceRef src, int newWidth, int newHeight, int offsetX, int offsetY );
 /// creates XPM image
-LVImageSourceRef LVCreateXPMImageSource( const unsigned char * data[] );
+LVImageSourceRef LVCreateXPMImageSource( const char * data[] );
 LVImageSourceRef LVCreateNodeImageSource( ldomNode * node );
 LVImageSourceRef LVCreateDummyImageSource( ldomNode * node, int width, int height );
 /// creates image source from stream

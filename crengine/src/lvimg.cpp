@@ -596,19 +596,19 @@ public:
 class LVXPMImageSource : public LVImageSource
 {
 protected:
-    unsigned char ** _rows;
+    char ** _rows;
     lUInt32 * _palette;
     lUInt8 _pchars[128];
     int _width;
     int _height;
     int _ncolors;
 public:
-    LVXPMImageSource( const unsigned char ** data )
+    LVXPMImageSource( const char ** data )
         : _rows(NULL), _palette(NULL), _width(0), _height(0), _ncolors(0)
     {
         bool err = false;
         int charsperpixel;
-        if ( sscanf( (const char *) data[0], "%d %d %d %d", &_width, &_height, &_ncolors, &charsperpixel )!=4 ) {
+        if ( sscanf( data[0], "%d %d %d %d", &_width, &_height, &_ncolors, &charsperpixel )!=4 ) {
             err = true;
         } else if ( _width>0 && _width<255 && _height>0 && _height<255 && _ncolors>=2 && _ncolors<255 && charsperpixel == 1 ) {
             _rows = new unsigned char * [_height];
@@ -620,8 +620,8 @@ public:
             _palette = new lUInt32[_ncolors];
             memset( _pchars, 0, 128 );
             for ( int cl=0; cl<_ncolors; cl++ ) {
-                const unsigned char * __restrict src = data[1+cl];
-                _pchars[(*src++) & 127] = cl;
+                const char * __restrict src = data[1+cl];
+                _pchars[(unsigned char)(*src++) & 127] = cl;
                 if ( (*src++)!=' ' || (*src++)!='c' || (*src++)!=' ' ) {
                     err = true;
                     break;
@@ -629,16 +629,16 @@ public:
                 if ( *src == '#' ) {
                     src++;
                     unsigned c;
-                    if ( sscanf((const char *) src, "%x", &c) != 1 ) {
+                    if ( sscanf(src, "%x", &c) != 1 ) {
                         err = true;
                         break;
                     }
                     _palette[cl] = (lUInt32)c;
-                } else if ( !strcmp( (const char *) src, "None" ) )
+                } else if ( !strcmp( src, "None" ) )
                     _palette[cl] = 0xFF000000;
-                else if ( !strcmp( (const char *) src, "Black" ) )
+                else if ( !strcmp( src, "Black" ) )
                     _palette[cl] = 0x000000;
-                else if ( !strcmp( (const char *) src, "White" ) )
+                else if ( !strcmp( src, "White" ) )
                     _palette[cl] = 0xFFFFFF;
                 else
                     _palette[cl] = 0x000000;
@@ -688,7 +688,7 @@ public:
     }
 };
 
-LVImageSourceRef LVCreateXPMImageSource( const unsigned char * data[] )
+LVImageSourceRef LVCreateXPMImageSource( const char * data[] )
 {
     LVImageSourceRef ref( new LVXPMImageSource( data ) );
     if ( ref->GetWidth()<1 )

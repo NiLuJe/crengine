@@ -312,7 +312,7 @@ public:
 
 
 /* XPM */
-static const unsigned char *menu_item_background[] = {
+static const char *menu_item_background[] = {
 /* width height num_colors chars_per_pixel */
 "44 48 5 1",
 /* colors */
@@ -373,7 +373,7 @@ static const unsigned char *menu_item_background[] = {
 };
 
 /* XPM */
-static const unsigned char *menu_shortcut_background[] = {
+static const char *menu_shortcut_background[] = {
 /* width height num_colors chars_per_pixel */
 "36 48 5 1",
 /* colors */
