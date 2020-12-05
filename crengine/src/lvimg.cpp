@@ -677,7 +677,7 @@ public:
             {
                 const char * __restrict src = _rows[i];
                 for ( int x=0; x<_width; x++ ) {
-                    row[x] = _palette[_pchars[src[x]]];
+                    row[x] = _palette[_pchars[(unsigned char)src[x]]];
                 }
                 callback->OnLineDecoded(this, i, row);
             }
