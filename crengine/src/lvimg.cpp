@@ -611,9 +611,9 @@ public:
         if ( sscanf( data[0], "%d %d %d %d", &_width, &_height, &_ncolors, &charsperpixel )!=4 ) {
             err = true;
         } else if ( _width>0 && _width<255 && _height>0 && _height<255 && _ncolors>=2 && _ncolors<255 && charsperpixel == 1 ) {
-            _rows = new unsigned char * [_height];
+            _rows = new char * [_height];
             for ( int i=0; i<_height; i++ ) {
-                _rows[i] = new unsigned char[_width];
+                _rows[i] = new char[_width];
                 memcpy( _rows[i], data[i+1+_ncolors], _width );
             }
 
@@ -675,7 +675,7 @@ public:
             lUInt32 * __restrict row = new lUInt32[ _width ];
             for (int i=0; i<_height; i++)
             {
-                const unsigned char * __restrict src = _rows[i];
+                const char * __restrict src = _rows[i];
                 for ( int x=0; x<_width; x++ ) {
                     row[x] = _palette[_pchars[src[x]]];
                 }
