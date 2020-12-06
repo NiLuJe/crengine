@@ -1287,7 +1287,10 @@ bool CacheFile::allocCompRess(void)
     // NOTE: ZSTD_CLEVEL_DEFAULT is currently 3, sane range is 1-19
     ZSTD_CCtx_setParameter(_comp_ress->cctx, ZSTD_c_compressionLevel, ZSTD_CLEVEL_DEFAULT);
     //ZSTD_CCtx_setParameter(_comp_ress->cctx, ZSTD_c_checksumFlag, 1);
+
     // Threading? (Requires libzstd built w/ threading support)
+    // NOTE: Since we always use ZSTD_e_end, which basically defers to ZSTD_compress2(), this will *not* make it async,
+    //       it'll still block.
     //ZSTD_CCtx_setParameter(_comp_ress->cctx, ZSTD_c_nbWorkers, 4);
 
     return true;
@@ -1321,6 +1324,9 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
     // Tell the compressor just how much data we need to compress
     ZSTD_CCtx_setPledgedSrcSize(cctx, bufsize);
 
+    // Debug: compare current buffOutSize against the worst-case
+    // printf("ZSTD_compressBound(): %zu\n", ZSTD_compressBound(bufsize));
+
     size_t compressed_size = 0;
     lUInt8 *compressed_buf = NULL;
 
@@ -1343,7 +1349,7 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
         compressed_size += output.pos;
 
         finished = (remaining == 0);
-        // printf("ldomPack(): finished? %d (current chunk: %zu; total in: %zu; total out: %zu)\n", finished, output.pos, bufsize, compressed_size);
+        // printf("ldomPack(): finished? %d (current chunk: %zu/%zu; total in: %zu; total out: %zu)\n", finished, output.pos, output.size, bufsize, compressed_size);
     } while (!finished);
 
     dstsize = compressed_size;
@@ -1418,6 +1424,7 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
         uncompressed_size += output.pos;
 
         lastRet = ret;
+        // printf("ldomUnpack(): ret: %d (current chunk: %zu/%zu;)\n", ret, output.pos, output.size);
     }
 
     if (lastRet != 0) {
