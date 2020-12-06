@@ -527,6 +527,20 @@ struct CacheFileHeader : public SimpleCacheFileHeader
 /**
  * Cache file implementation.
  */
+#if (USE_ZSTD == 1)
+typedef struct {
+    void* buffOut;
+    size_t buffOutSize;
+    ZSTD_CCtx* cctx;
+} zstd_comp_ress_t;
+
+typedef struct {
+    void* buffOut;
+    size_t buffOutSize;
+    ZSTD_DCtx* dctx;
+} zstd_decomp_ress_t;
+#endif
+
 class CacheFile
 {
     int _sectorSize; // block position and size granularity
@@ -539,6 +553,10 @@ class CacheFile
     LVPtrVector<CacheFileItem, true> _index; // full file block index
     LVPtrVector<CacheFileItem, false> _freeIndex; // free file block index
     LVHashTable<lUInt32, CacheFileItem*> _map; // hash map for fast search
+#if (USE_ZSTD == 1)
+    zstd_comp_ress_t* _comp_ress;
+    zstd_decomp_ress_t* _decomp_ress;
+#endif
     // searches for existing block
     CacheFileItem * findBlock( lUInt16 type, lUInt16 index );
     // alocates block at index, reuses existing one, if possible
@@ -591,6 +609,10 @@ public:
     /// reads block as a stream
     LVStreamRef readStream(lUInt16 type, lUInt16 index);
 
+#if (USE_ZSTD == 1)
+    bool allocCompRess();
+    bool allocDecompRess();
+#endif
     /// pack data from _buf to _compbuf
     bool ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, lUInt32 & dstsize );
     /// unpack data from _compbuf to _buf
@@ -621,6 +643,9 @@ public:
 // create uninitialized cache file, call open or create to initialize
 CacheFile::CacheFile(lUInt32 domVersion)
 : _sectorSize( CACHE_FILE_SECTOR_SIZE ), _size(0), _indexChanged(false), _dirty(true), _domVersion(domVersion), _map(1024), _cachePath(lString32::empty_str)
+#if (USE_ZSTD == 1)
+    _comp_ress(nullptr), _decomp_ress(nullptr)
+#endif
 {
 }
 
@@ -632,6 +657,18 @@ CacheFile::~CacheFile()
         //CRTimerUtil infinite;
         //flush( true, infinite );
     }
+#if (USE_ZSTD == 1)
+    if (_comp_ress) {
+        ZSTD_freeCCtx(_comp_ress->cctx);
+        free(_comp_ress->buffOut);
+        delete _comp_ress;
+    }
+    if (_decomp_ress) {
+        ZSTD_freeDCtx(_decomp_ress->dctx);
+        free(_decomp_ress->buffOut);
+        delete _decomp_ress;
+    }
+#endif
 }
 
 /// sets dirty flag value, returns true if value is changed
@@ -1228,29 +1265,54 @@ bool CacheFile::create( LVStreamRef stream )
 }
 
 #if (USE_ZSTD == 1)
+bool CacheFile::allocCompRess( void )
+{
+    _comp_ress = new zstd_comp_ress_t;
+    _comp_ress->buffOut = nullptr;
+    _comp_ress->cctx = nullptr;
+
+    _comp_ress->buffOutSize = ZSTD_CStreamOutSize();
+    _comp_ress->buffOut = malloc(buffOutSize);
+    if (!_comp_ress->buffOut) {
+        return false;
+    }
+    _comp_ress->cctx = ZSTD_createCCtx();
+    if (_comp_ress->cctx == nullptr) {
+        return false;
+    }
+
+    // Parameters are sticky
+    // NOTE: ZSTD_CLEVEL_DEFAULT is currently 3, sane range is 1-19
+    ZSTD_CCtx_setParameter(_comp_ress->cctx, ZSTD_c_compressionLevel, ZSTD_CLEVEL_DEFAULT);
+    //ZSTD_CCtx_setParameter(_comp_ress->cctx, ZSTD_c_checksumFlag, 1);
+    // Threading? (Requires libzstd built w/ threading support)
+    //ZSTD_CCtx_setParameter(_comp_ress->cctx, ZSTD_c_nbWorkers, 4);
+}
+
 /// pack data from _buf to _compbuf
 bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, lUInt32 & dstsize )
 {
-    // TODO: Keep the context & buffer around (reset context, memset buffer)
-    //       c.f. examples/multiple_streaming_compression.c
-    //       In ctor/dtor? lazy?
-    //       I'm outside a class here :s (also, I suck at C++)
     printf("ldomPack() <- %p (%zu)\n", buf, bufsize);
 
-    // c.f., ZSTD's examples/streaming_compression.c
-    size_t const buffOutSize = ZSTD_CStreamOutSize();
-    void*  const buffOut = malloc(buffOutSize);
+    // Lazy init our ressources, and keep 'em around
+    if (!_comp_ress) {
+        if(!allocCompRess) {
+            printf("ldomPack() failed to allocate ressources\n");
+            return false;
+        }
+    }
 
-    ZSTD_CCtx* const cctx = ZSTD_createCCtx();
-    if (cctx == nullptr) {
-        free(buffOut);
+    // c.f., ZSTD's examples/streaming_compression.c
+    size_t const buffOutSize = _comp_ress->buffOutSize;
+    void*  const buffOut = _comp_ress->buffOut;
+    ZSTD_CCtx* const cctx = _comp_ress->cctx;
+
+    // Reset the context
+    size_t const err = ZSTD_CCtx_reset(cctx, ZSTD_reset_session_only);
+    if (ZSTD_isError(err)) {
+        printf("ZSTD_CCtx_reset() error: %s\n", ZSTD_getErrorName(err));
         return false;
     }
-    // NOTE: ZSTD_CLEVEL_DEFAULT is currently 3, sane range is 1-19
-    ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel, ZSTD_CLEVEL_DEFAULT);
-    //ZSTD_CCtx_setParameter(cctx, ZSTD_c_checksumFlag, 1);
-    // Threading? (Requires libzstd built w/ threading support)
-    //ZSTD_CCtx_setParameter(cctx, ZSTD_c_nbWorkers, 4);
 
     // Tell the compressor just how much data we need to compress
     ZSTD_CCtx_setPledgedSrcSize(cctx, bufsize);
@@ -1266,8 +1328,6 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
         size_t const remaining = ZSTD_compressStream2(cctx, &output, &input, mode);
         if (ZSTD_isError(remaining)) {
             printf("ZSTD_compressStream2() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(remaining), bufsize, compressed_size);
-            ZSTD_freeCCtx(cctx);
-            free(buffOut);
             if (compressed_buf) {
                 free(compressed_buf);
             }
@@ -1282,13 +1342,27 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
         printf("ldomPack(): finished? %d (current chunk: %zu; total in: %zu; total out: %zu)\n", finished, output.pos, bufsize, compressed_size);
     } while (!finished);
 
-    ZSTD_freeCCtx(cctx);
-    free(buffOut);
-
     dstsize = compressed_size;
     dstbuf = compressed_buf;
     printf("ldomPack() done: %zu -> %zu\n", bufsize, compressed_size);
     return true;
+}
+
+bool CacheFile::allocDecompRess( void )
+{
+    _decomp_ress = new zstd_decomp_ress_t;
+    _decomp_ress->buffOut = nullptr;
+    _decomp_ress->dctx = nullptr;
+
+    _decomp_ress->buffOutSize = ZSTD_DStreamOutSize();
+    _decomp_ress->buffOut = malloc(buffOutSize);
+    if (!_decomp_ress->buffOut) {
+        return false;
+    }
+    _decomp_ress->dctx = ZSTD_createDCtx();
+    if (_decomp_ress->dctx == nullptr) {
+        return false;
+    }
 }
 
 /// unpack data from _compbuf to _buf
@@ -1296,13 +1370,23 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
 {
     printf("ldomUnpack() <- %p (%zu)\n", compbuf, compsize);
 
-    // c.f., ZSTD's examples/streaming_decompression.c
-    size_t const buffOutSize = ZSTD_DStreamOutSize();
-    void*  const buffOut = malloc(buffOutSize);
+    // Lazy init our ressources, and keep 'em around
+    if (!_decomp_ress) {
+        if(!allocDecompRess) {
+            printf("ldomUnpack() failed to allocate ressources\n");
+            return false;
+        }
+    }
 
-    ZSTD_DCtx* const dctx = ZSTD_createDCtx();
-    if (dctx == nullptr) {
-        free(buffOut);
+    // c.f., ZSTD's examples/streaming_decompression.c
+    size_t const buffOutSize = _decomp_ress->buffOutSize;
+    void*  const buffOut = _decomp_ress->buffOut;
+    ZSTD_DCtx* const dctx = _decomp_ress->dctx;
+
+    // Reset the context
+    size_t const err = ZSTD_DCtx_reset(dctx, ZSTD_reset_session_only);
+    if (ZSTD_isError(err)) {
+        printf("ZSTD_DCtx_reset() error: %s\n", ZSTD_getErrorName(err));
         return false;
     }
 
@@ -1316,8 +1400,6 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
         size_t const ret = ZSTD_decompressStream(dctx, &output , &input);
         if (ZSTD_isError(ret)) {
             printf("ZSTD_decompressStream() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(ret), compsize, uncompressed_size);
-            ZSTD_freeDCtx(dctx);
-            free(buffOut);
             if (uncompressed_buf) {
                 free(uncompressed_buf);
             }
@@ -1330,9 +1412,6 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
 
         lastRet = ret;
     }
-
-    ZSTD_freeDCtx(dctx);
-    free(buffOut);
 
     if (lastRet != 0) {
         printf("ldomUnpack(): EOF before end of stream: %zu\n", lastRet);
