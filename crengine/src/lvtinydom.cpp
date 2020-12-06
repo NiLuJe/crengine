@@ -1268,7 +1268,7 @@ bool CacheFile::create( LVStreamRef stream )
 #if (USE_ZSTD == 1)
 bool CacheFile::allocCompRess(void)
 {
-    printf("CacheFile::allocCompRess\n");
+    // printf("CacheFile::allocCompRess\n");
     _comp_ress = new zstd_comp_ress_t;
     _comp_ress->buffOut = nullptr;
     _comp_ress->cctx = nullptr;
@@ -1296,12 +1296,12 @@ bool CacheFile::allocCompRess(void)
 /// pack data from _buf to _compbuf
 bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, lUInt32 & dstsize )
 {
-    printf("ldomPack() <- %p (%zu)\n", buf, bufsize);
+    // printf("ldomPack() <- %p (%zu)\n", buf, bufsize);
 
     // Lazy init our ressources, and keep 'em around
     if (!_comp_ress) {
         if(!allocCompRess()) {
-            printf("ldomPack() failed to allocate ressources\n");
+            // printf("ldomPack() failed to allocate ressources\n");
             return false;
         }
     }
@@ -1314,7 +1314,7 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
     // Reset the context
     size_t const err = ZSTD_CCtx_reset(cctx, ZSTD_reset_session_only);
     if (ZSTD_isError(err)) {
-        printf("ZSTD_CCtx_reset() error: %s\n", ZSTD_getErrorName(err));
+        // printf("ZSTD_CCtx_reset() error: %s\n", ZSTD_getErrorName(err));
         return false;
     }
 
@@ -1331,7 +1331,7 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
         ZSTD_outBuffer output = { buffOut, buffOutSize, 0 };
         size_t const remaining = ZSTD_compressStream2(cctx, &output, &input, mode);
         if (ZSTD_isError(remaining)) {
-            printf("ZSTD_compressStream2() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(remaining), bufsize, compressed_size);
+            // printf("ZSTD_compressStream2() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(remaining), bufsize, compressed_size);
             if (compressed_buf) {
                 free(compressed_buf);
             }
@@ -1343,18 +1343,18 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
         compressed_size += output.pos;
 
         finished = (remaining == 0);
-        printf("ldomPack(): finished? %d (current chunk: %zu; total in: %zu; total out: %zu)\n", finished, output.pos, bufsize, compressed_size);
+        // printf("ldomPack(): finished? %d (current chunk: %zu; total in: %zu; total out: %zu)\n", finished, output.pos, bufsize, compressed_size);
     } while (!finished);
 
     dstsize = compressed_size;
     dstbuf = compressed_buf;
-    printf("ldomPack() done: %zu -> %zu\n", bufsize, compressed_size);
+    // printf("ldomPack() done: %zu -> %zu\n", bufsize, compressed_size);
     return true;
 }
 
 bool CacheFile::allocDecompRess(void)
 {
-    printf("CacheFile::allocDecompRess\n");
+    // printf("CacheFile::allocDecompRess\n");
     _decomp_ress = new zstd_decomp_ress_t;
     _decomp_ress->buffOut = nullptr;
     _decomp_ress->dctx = nullptr;
@@ -1375,12 +1375,12 @@ bool CacheFile::allocDecompRess(void)
 /// unpack data from _compbuf to _buf
 bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &dstbuf, lUInt32 & dstsize  )
 {
-    printf("ldomUnpack() <- %p (%zu)\n", compbuf, compsize);
+    // printf("ldomUnpack() <- %p (%zu)\n", compbuf, compsize);
 
     // Lazy init our ressources, and keep 'em around
     if (!_decomp_ress) {
         if(!allocDecompRess()) {
-            printf("ldomUnpack() failed to allocate ressources\n");
+            // printf("ldomUnpack() failed to allocate ressources\n");
             return false;
         }
     }
@@ -1393,7 +1393,7 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
     // Reset the context
     size_t const err = ZSTD_DCtx_reset(dctx, ZSTD_reset_session_only);
     if (ZSTD_isError(err)) {
-        printf("ZSTD_DCtx_reset() error: %s\n", ZSTD_getErrorName(err));
+        // printf("ZSTD_DCtx_reset() error: %s\n", ZSTD_getErrorName(err));
         return false;
     }
 
@@ -1406,7 +1406,7 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
         ZSTD_outBuffer output = { buffOut, buffOutSize, 0 };
         size_t const ret = ZSTD_decompressStream(dctx, &output , &input);
         if (ZSTD_isError(ret)) {
-            printf("ZSTD_decompressStream() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(ret), compsize, uncompressed_size);
+            // printf("ZSTD_decompressStream() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(ret), compsize, uncompressed_size);
             if (uncompressed_buf) {
                 free(uncompressed_buf);
             }
@@ -1421,12 +1421,16 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
     }
 
     if (lastRet != 0) {
-        printf("ldomUnpack(): EOF before end of stream: %zu\n", lastRet);
+        //printf("ldomUnpack(): EOF before end of stream: %zu\n", lastRet);
+        if (uncompressed_buf) {
+            free(uncompressed_buf);
+        }
+        return false;
     }
 
     dstsize = uncompressed_size;
     dstbuf = uncompressed_buf;
-    printf("ldomUnpack() done: %zu -> %zu\n", compsize, uncompressed_size);
+    // printf("ldomUnpack() done: %zu -> %zu\n", compsize, uncompressed_size);
     return true;
 }
 #else
