@@ -611,7 +611,9 @@ public:
 
 #if (USE_ZSTD == 1)
     bool allocCompRess(void);
+    bool freeCompRess(void);
     bool allocDecompRess(void);
+    bool freeDecompRess(void);
 #endif
     /// pack data from _buf to _compbuf
     bool ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, lUInt32 & dstsize );
@@ -659,16 +661,8 @@ CacheFile::~CacheFile()
         //flush( true, infinite );
     }
 #if (USE_ZSTD == 1)
-    if (_comp_ress) {
-        ZSTD_freeCCtx(_comp_ress->cctx);
-        free(_comp_ress->buffOut);
-        delete _comp_ress;
-    }
-    if (_decomp_ress) {
-        ZSTD_freeDCtx(_decomp_ress->dctx);
-        free(_decomp_ress->buffOut);
-        delete _decomp_ress;
-    }
+    freeCompRess();
+    freeDecompRess();
 #endif
 }
 
@@ -1297,6 +1291,23 @@ bool CacheFile::allocCompRess(void)
     return true;
 }
 
+bool CacheFile::freeCompRess(void)
+{
+    // printf("CacheFile::freeCompRess\n");
+    if (_comp_ress) {
+        ZSTD_freeCCtx(_comp_ress->cctx);
+        _comp_ress->cctx = nullptr;
+        free(_comp_ress->buffOut);
+        _comp_ress->buffOut = nullptr;
+        delete _comp_ress;
+        _comp_ress = nullptr;
+
+        return true;
+    }
+
+    return false;
+}
+
 /// pack data from _buf to _compbuf
 bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, lUInt32 & dstsize )
 {
@@ -1377,6 +1388,23 @@ bool CacheFile::allocDecompRess(void)
     }
 
     return true;
+}
+
+bool CacheFile::freeDecompRess(void)
+{
+    // printf("CacheFile::freeDecompRess\n");
+    if (_decomp_ress) {
+        ZSTD_freeDCtx(_decomp_ress->dctx);
+        _decomp_ress->dctx = nullptr;
+        free(_decomp_ress->buffOut);
+        _decomp_ress->buffOut = nullptr;
+        delete _decomp_ress;
+        _decomp_ress = nullptr;
+
+        return true;
+    }
+
+    return false;
 }
 
 /// unpack data from _compbuf to _buf
@@ -14831,9 +14859,11 @@ bool ldomDocument::loadCacheFileContent(CacheLoadingCallback * formatCallback, L
     CRLog::trace("ldomDocument::loadCacheFileContent() - completed successfully");
     if (progressCallback) progressCallback->OnLoadFileProgress(95);
 
-    // And now should be a good place to release ZSTD uncompression resources...
-    // Not quite... Four more bursts left...
-    printf("Not quite done with unpacking...\n");
+#if (USE_ZSTD == 1)
+    // NOTE: And now might have been a good place to release ZSTD uncompression resources...
+    //       Except not quite... There are roughly four more bursts of ldomUnpack via getElem left...
+    //_cacheFile->freeDecompRess();
+#endif
 
     return true;
 }
@@ -15084,8 +15114,10 @@ ContinuousOperationResult ldomDocument::saveChanges( CRTimerUtil & maxTime, LVDo
     CRLog::trace("ldomDocument::saveChanges() - done");
     if (progressCallback) progressCallback->OnSaveCacheFileEnd();
 
+#if (USE_ZSTD == 1)
     // And now should be a good place to release ZSTD compression resources...
-    printf("Done with packing!\n");
+    _cacheFile->freeCompRess();
+#endif
 
     return CR_DONE;
 }
