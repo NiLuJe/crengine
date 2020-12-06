@@ -610,8 +610,8 @@ public:
     LVStreamRef readStream(lUInt16 type, lUInt16 index);
 
 #if (USE_ZSTD == 1)
-    bool allocCompRess();
-    bool allocDecompRess();
+    bool allocCompRess(void);
+    bool allocDecompRess(void);
 #endif
     /// pack data from _buf to _compbuf
     bool ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, lUInt32 & dstsize );
@@ -642,9 +642,10 @@ public:
 
 // create uninitialized cache file, call open or create to initialize
 CacheFile::CacheFile(lUInt32 domVersion)
-: _sectorSize( CACHE_FILE_SECTOR_SIZE ), _size(0), _indexChanged(false), _dirty(true), _domVersion(domVersion), _map(1024), _cachePath(lString32::empty_str)
 #if (USE_ZSTD == 1)
-    _comp_ress(nullptr), _decomp_ress(nullptr)
+: _sectorSize( CACHE_FILE_SECTOR_SIZE ), _size(0), _indexChanged(false), _dirty(true), _domVersion(domVersion), _map(1024), _cachePath(lString32::empty_str), _comp_ress(nullptr), _decomp_ress(nullptr)
+#else
+: _sectorSize( CACHE_FILE_SECTOR_SIZE ), _size(0), _indexChanged(false), _dirty(true), _domVersion(domVersion), _map(1024), _cachePath(lString32::empty_str)
 #endif
 {
 }
@@ -1265,14 +1266,15 @@ bool CacheFile::create( LVStreamRef stream )
 }
 
 #if (USE_ZSTD == 1)
-bool CacheFile::allocCompRess( void )
+bool CacheFile::allocCompRess(void)
 {
+    printf("CacheFile::allocCompRess\n");
     _comp_ress = new zstd_comp_ress_t;
     _comp_ress->buffOut = nullptr;
     _comp_ress->cctx = nullptr;
 
     _comp_ress->buffOutSize = ZSTD_CStreamOutSize();
-    _comp_ress->buffOut = malloc(buffOutSize);
+    _comp_ress->buffOut = malloc(_comp_ress->buffOutSize);
     if (!_comp_ress->buffOut) {
         return false;
     }
@@ -1287,6 +1289,8 @@ bool CacheFile::allocCompRess( void )
     //ZSTD_CCtx_setParameter(_comp_ress->cctx, ZSTD_c_checksumFlag, 1);
     // Threading? (Requires libzstd built w/ threading support)
     //ZSTD_CCtx_setParameter(_comp_ress->cctx, ZSTD_c_nbWorkers, 4);
+
+    return true;
 }
 
 /// pack data from _buf to _compbuf
@@ -1296,7 +1300,7 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
 
     // Lazy init our ressources, and keep 'em around
     if (!_comp_ress) {
-        if(!allocCompRess) {
+        if(!allocCompRess()) {
             printf("ldomPack() failed to allocate ressources\n");
             return false;
         }
@@ -1348,14 +1352,15 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
     return true;
 }
 
-bool CacheFile::allocDecompRess( void )
+bool CacheFile::allocDecompRess(void)
 {
+    printf("CacheFile::allocDecompRess\n");
     _decomp_ress = new zstd_decomp_ress_t;
     _decomp_ress->buffOut = nullptr;
     _decomp_ress->dctx = nullptr;
 
     _decomp_ress->buffOutSize = ZSTD_DStreamOutSize();
-    _decomp_ress->buffOut = malloc(buffOutSize);
+    _decomp_ress->buffOut = malloc(_decomp_ress->buffOutSize);
     if (!_decomp_ress->buffOut) {
         return false;
     }
@@ -1363,6 +1368,8 @@ bool CacheFile::allocDecompRess( void )
     if (_decomp_ress->dctx == nullptr) {
         return false;
     }
+
+    return true;
 }
 
 /// unpack data from _compbuf to _buf
@@ -1372,7 +1379,7 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
 
     // Lazy init our ressources, and keep 'em around
     if (!_decomp_ress) {
-        if(!allocDecompRess) {
+        if(!allocDecompRess()) {
             printf("ldomUnpack() failed to allocate ressources\n");
             return false;
         }
