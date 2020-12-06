@@ -1268,7 +1268,7 @@ bool CacheFile::create( LVStreamRef stream )
 #if (USE_ZSTD == 1)
 bool CacheFile::allocCompRess(void)
 {
-    // printf("CacheFile::allocCompRess\n");
+     printf("CacheFile::allocCompRess\n");
     _comp_ress = new zstd_comp_ress_t;
     _comp_ress->buffOut = nullptr;
     _comp_ress->cctx = nullptr;
@@ -1300,12 +1300,12 @@ bool CacheFile::allocCompRess(void)
 /// pack data from _buf to _compbuf
 bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, lUInt32 & dstsize )
 {
-    // printf("ldomPack() <- %p (%zu)\n", buf, bufsize);
+     printf("ldomPack() <- %p (%zu)\n", buf, bufsize);
 
     // Lazy init our ressources, and keep 'em around
     if (!_comp_ress) {
         if(!allocCompRess()) {
-            // printf("ldomPack() failed to allocate ressources\n");
+             printf("ldomPack() failed to allocate ressources\n");
             return false;
         }
     }
@@ -1318,7 +1318,7 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
     // Reset the context
     size_t const err = ZSTD_CCtx_reset(cctx, ZSTD_reset_session_only);
     if (ZSTD_isError(err)) {
-        // printf("ZSTD_CCtx_reset() error: %s\n", ZSTD_getErrorName(err));
+         printf("ZSTD_CCtx_reset() error: %s\n", ZSTD_getErrorName(err));
         return false;
     }
 
@@ -1326,7 +1326,7 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
     ZSTD_CCtx_setPledgedSrcSize(cctx, bufsize);
 
     // Debug: compare current buffOutSize against the worst-case
-    // printf("ZSTD_compressBound(): %zu\n", ZSTD_compressBound(bufsize));
+     printf("ZSTD_compressBound(): %zu\n", ZSTD_compressBound(bufsize));
 
     size_t compressed_size = 0;
     lUInt8 *compressed_buf = NULL;
@@ -1338,7 +1338,7 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
         ZSTD_outBuffer output = { buffOut, buffOutSize, 0 };
         size_t const remaining = ZSTD_compressStream2(cctx, &output, &input, mode);
         if (ZSTD_isError(remaining)) {
-            // printf("ZSTD_compressStream2() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(remaining), bufsize, compressed_size);
+             printf("ZSTD_compressStream2() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(remaining), bufsize, compressed_size);
             if (compressed_buf) {
                 free(compressed_buf);
             }
@@ -1350,18 +1350,18 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
         compressed_size += output.pos;
 
         finished = (remaining == 0);
-        // printf("ldomPack(): finished? %d (current chunk: %zu/%zu; total in: %zu; total out: %zu)\n", finished, output.pos, output.size, bufsize, compressed_size);
+         printf("ldomPack(): finished? %d (current chunk: %zu/%zu; total in: %zu; total out: %zu)\n", finished, output.pos, output.size, bufsize, compressed_size);
     } while (!finished);
 
     dstsize = compressed_size;
     dstbuf = compressed_buf;
-    // printf("ldomPack() done: %zu -> %zu\n", bufsize, compressed_size);
+     printf("ldomPack() done: %zu -> %zu\n", bufsize, compressed_size);
     return true;
 }
 
 bool CacheFile::allocDecompRess(void)
 {
-    // printf("CacheFile::allocDecompRess\n");
+     printf("CacheFile::allocDecompRess\n");
     _decomp_ress = new zstd_decomp_ress_t;
     _decomp_ress->buffOut = nullptr;
     _decomp_ress->dctx = nullptr;
@@ -1382,12 +1382,12 @@ bool CacheFile::allocDecompRess(void)
 /// unpack data from _compbuf to _buf
 bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &dstbuf, lUInt32 & dstsize  )
 {
-    // printf("ldomUnpack() <- %p (%zu)\n", compbuf, compsize);
+     printf("ldomUnpack() <- %p (%zu)\n", compbuf, compsize);
 
     // Lazy init our ressources, and keep 'em around
     if (!_decomp_ress) {
         if(!allocDecompRess()) {
-            // printf("ldomUnpack() failed to allocate ressources\n");
+             printf("ldomUnpack() failed to allocate ressources\n");
             return false;
         }
     }
@@ -1400,7 +1400,7 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
     // Reset the context
     size_t const err = ZSTD_DCtx_reset(dctx, ZSTD_reset_session_only);
     if (ZSTD_isError(err)) {
-        // printf("ZSTD_DCtx_reset() error: %s\n", ZSTD_getErrorName(err));
+         printf("ZSTD_DCtx_reset() error: %s\n", ZSTD_getErrorName(err));
         return false;
     }
 
@@ -1413,7 +1413,7 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
         ZSTD_outBuffer output = { buffOut, buffOutSize, 0 };
         size_t const ret = ZSTD_decompressStream(dctx, &output , &input);
         if (ZSTD_isError(ret)) {
-            // printf("ZSTD_decompressStream() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(ret), compsize, uncompressed_size);
+             printf("ZSTD_decompressStream() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(ret), compsize, uncompressed_size);
             if (uncompressed_buf) {
                 free(uncompressed_buf);
             }
@@ -1425,11 +1425,11 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
         uncompressed_size += output.pos;
 
         lastRet = ret;
-        // printf("ldomUnpack(): ret: %d (current chunk: %zu/%zu;)\n", ret, output.pos, output.size);
+         printf("ldomUnpack(): ret: %zu (current chunk: %zu/%zu)\n", ret, output.pos, output.size);
     }
 
     if (lastRet != 0) {
-        //printf("ldomUnpack(): EOF before end of stream: %zu\n", lastRet);
+         printf("ldomUnpack(): EOF before end of stream: %zu\n", lastRet);
         if (uncompressed_buf) {
             free(uncompressed_buf);
         }
@@ -1438,7 +1438,7 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
 
     dstsize = uncompressed_size;
     dstbuf = uncompressed_buf;
-    // printf("ldomUnpack() done: %zu -> %zu\n", compsize, uncompressed_size);
+     printf("ldomUnpack() done: %zu -> %zu\n", compsize, uncompressed_size);
     return true;
 }
 #else
@@ -1580,6 +1580,7 @@ bool ldomBlobCache::loadIndex()
     bool res;
     SerialBuf buf(0,true);
     res = _cacheFile->read(CBT_BLOB_INDEX, buf);
+    printf("Done w/ ldomBlobCache::loadIndex\n");
     if (!res) {
         _list.clear();
         return true; // missing blob index: treat as empty list of blobs
@@ -2676,6 +2677,7 @@ bool tinyNodeCollection::loadNodeData(lUInt16 type, ldomNode ** list, int nodeco
             }
         }
     }
+    printf("Done w/ tinyNodeCollection::loadNodeData(lUInt16 type, ldomNode ** list, int nodecount)\n");
     return true;
 }
 
@@ -2730,6 +2732,7 @@ bool tinyNodeCollection::loadNodeData()
     SerialBuf buf(0, true);
     if ( !_cacheFile->read((lUInt16)CBT_NODE_INDEX, buf) )
         return false;
+    printf("Done w/ tinyNodeCollection::loadNodeData\n");
     lUInt32 magic;
     lInt32 elemcount;
     lInt32 textcount;
@@ -3009,6 +3012,7 @@ bool ldomDataStorageManager::load()
         CRLog::error("ldomDataStorageManager::load() - Cannot read chunk index");
         return false;
     }
+    printf("Done w/ ldomDataStorageManager::load()\n");
     lUInt32 n;
     buf >> n;
     if (n > 10000)
@@ -3084,6 +3088,7 @@ void ldomDataStorageManager::getStyleData( lUInt32 elemDataIndex, ldomNodeStyleI
         compact( 0 );
     }
     ldomTextStorageChunk * chunk = getChunk( chunkIndex<<16 );
+    printf("Done w/ ldomDataStorageManager::getStyleData( lUInt32 elemDataIndex, ldomNodeStyleInfo * dst )\n");
     int offsetIndex = index & STYLE_DATA_CHUNK_MASK;
     chunk->getRaw( offsetIndex * sizeof(ldomNodeStyleInfo), sizeof(ldomNodeStyleInfo), (lUInt8 *)dst );
 }
@@ -3102,6 +3107,7 @@ void ldomDataStorageManager::setStyleData( lUInt32 elemDataIndex, const ldomNode
         compact( 0 );
     }
     ldomTextStorageChunk * chunk = getChunk( chunkIndex<<16 );
+    printf("Done w/ ldomDataStorageManager::setStyleData( lUInt32 elemDataIndex, const ldomNodeStyleInfo * src )\n");
     int offsetIndex = index & STYLE_DATA_CHUNK_MASK;
     chunk->setRaw( offsetIndex * sizeof(ldomNodeStyleInfo), sizeof(ldomNodeStyleInfo), (const lUInt8 *)src );
 }
@@ -3121,6 +3127,7 @@ void ldomDataStorageManager::getRendRectData( lUInt32 elemDataIndex, lvdomElemen
         compact( 0 );
     }
     ldomTextStorageChunk * chunk = getChunk( chunkIndex<<16 );
+    printf("Done w/ ldomDataStorageManager::getRendRectData( lUInt32 elemDataIndex, lvdomElementFormatRec * dst )\n");
     int offsetIndex = index & RECT_DATA_CHUNK_MASK;
     chunk->getRaw( offsetIndex * sizeof(lvdomElementFormatRec), sizeof(lvdomElementFormatRec), (lUInt8 *)dst );
 }
@@ -3139,6 +3146,7 @@ void ldomDataStorageManager::setRendRectData( lUInt32 elemDataIndex, const lvdom
         compact( 0 );
     }
     ldomTextStorageChunk * chunk = getChunk( chunkIndex<<16 );
+    printf("Done w/ ldomDataStorageManager::setRendRectData( lUInt32 elemDataIndex, const lvdomElementFormatRec * src )\n");
     int offsetIndex = index & RECT_DATA_CHUNK_MASK;
     chunk->setRaw( offsetIndex * sizeof(lvdomElementFormatRec), sizeof(lvdomElementFormatRec), (const lUInt8 *)src );
 }
@@ -3164,6 +3172,7 @@ lUInt32 ldomDataStorageManager::allocText( lUInt32 dataIndex, lUInt32 parentInde
         if ( offset<0 )
             crFatalError(1001, "Unexpected error while allocation of text");
     }
+    printf("Done w/ ldomDataStorageManager::allocText( lUInt32 dataIndex, lUInt32 parentIndex, const lString8 & text )\n");
     return offset | (_activeChunk->getIndex()<<16);
 }
 
@@ -3187,6 +3196,7 @@ lUInt32 ldomDataStorageManager::allocElem( lUInt32 dataIndex, lUInt32 parentInde
         if ( offset<0 )
             crFatalError(1002, "Unexpected error while allocation of element");
     }
+    printf("Done w/ ldomDataStorageManager::allocElem( lUInt32 dataIndex, lUInt32 parentIndex, int childCount, int attrCount )\n");
     return offset | (_activeChunk->getIndex()<<16);
 }
 
@@ -3194,6 +3204,7 @@ lUInt32 ldomDataStorageManager::allocElem( lUInt32 dataIndex, lUInt32 parentInde
 void ldomDataStorageManager::modified( lUInt32 addr )
 {
     ldomTextStorageChunk * chunk = getChunk(addr);
+    printf("Done w/ ldomDataStorageManager::modified( lUInt32 addr )\n");
     chunk->modified();
 }
 
@@ -3201,6 +3212,7 @@ void ldomDataStorageManager::modified( lUInt32 addr )
 bool ldomDataStorageManager::setParent( lUInt32 address, lUInt32 parent )
 {
     ldomTextStorageChunk * chunk = getChunk(address);
+    printf("Done w/ ldomDataStorageManager::setParent( lUInt32 address, lUInt32 parent )\n");
     return chunk->setParent(address&0xFFFF, parent);
 }
 
@@ -3208,6 +3220,7 @@ bool ldomDataStorageManager::setParent( lUInt32 address, lUInt32 parent )
 void ldomDataStorageManager::freeNode( lUInt32 addr )
 {
     ldomTextStorageChunk * chunk = getChunk(addr);
+    printf("Done w/ ldomDataStorageManager::freeNode( lUInt32 addr )\n");
     chunk->freeNode(addr&0xFFFF);
 }
 
@@ -3215,6 +3228,7 @@ void ldomDataStorageManager::freeNode( lUInt32 addr )
 lString8 ldomDataStorageManager::getText( lUInt32 address )
 {
     ldomTextStorageChunk * chunk = getChunk(address);
+    printf("Done w/ ldomDataStorageManager::getText( lUInt32 address )\n");
     return chunk->getText(address&0xFFFF);
 }
 
@@ -3222,6 +3236,7 @@ lString8 ldomDataStorageManager::getText( lUInt32 address )
 ElementDataStorageItem * ldomDataStorageManager::getElem( lUInt32 addr )
 {
     ldomTextStorageChunk * chunk = getChunk(addr);
+    printf("Done w/ ldomDataStorageManager::getElem( lUInt32 addr )\n");
     return chunk->getElem(addr&0xFFFF);
 }
 
@@ -3229,6 +3244,7 @@ ElementDataStorageItem * ldomDataStorageManager::getElem( lUInt32 addr )
 lUInt32 ldomDataStorageManager::getParent( lUInt32 addr )
 {
     ldomTextStorageChunk * chunk = getChunk(addr);
+    printf("Done w/ ldomDataStorageManager::getParent( lUInt32 addr )\n");
     return chunk->getElem(addr&0xFFFF)->parentIndex;
 }
 #endif
@@ -3383,6 +3399,7 @@ bool ldomTextStorageChunk::restoreFromCache()
     int size;
     if ( !_manager->_cache->read( _manager->cacheType(), _index, _buf, size ) )
         return false;
+    printf("Done w/ ldomTextStorageChunk::restoreFromCache()\n");
     _bufsize = size;
     _manager->_uncompressedSize += _bufsize;
 #if DEBUG_DOM_STORAGE==1
@@ -14831,6 +14848,10 @@ bool ldomDocument::loadCacheFileContent(CacheLoadingCallback * formatCallback, L
     CRLog::trace("ldomDocument::loadCacheFileContent() - completed successfully");
     if (progressCallback) progressCallback->OnLoadFileProgress(95);
 
+    // And now should be a good place to release ZSTD uncompression resources...
+    // Not quite... Four more bursts left...
+    printf("Done with unpacking?\n");
+
     return true;
 }
 
@@ -15079,6 +15100,10 @@ ContinuousOperationResult ldomDocument::saveChanges( CRTimerUtil & maxTime, LVDo
     }
     CRLog::trace("ldomDocument::saveChanges() - done");
     if (progressCallback) progressCallback->OnSaveCacheFileEnd();
+
+    // And now should be a good place to release ZSTD compression resources...
+    printf("Done with packing!\n");
+
     return CR_DONE;
 }
 
@@ -15129,6 +15154,8 @@ bool tinyNodeCollection::loadStylesData()
     }
     lUInt32 stHash = 0;
     lInt32 len = 0;
+
+    printf("Done w/ tinyNodeCollection::loadStylesData\n");
 
     // lUInt32 myHash = _stylesheet.getHash();
     // When loading from cache, this stylesheet was built with the
