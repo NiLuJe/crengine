@@ -1322,6 +1322,7 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
     }
 
     // c.f., ZSTD's examples/streaming_compression.c
+    // NOTE: We could probably gain much by training zstd and using a dictionary, here ;).
     size_t const buffOutSize = _comp_ress->buffOutSize;
     void*  const buffOut = _comp_ress->buffOut;
     ZSTD_CCtx* const cctx = _comp_ress->cctx;
