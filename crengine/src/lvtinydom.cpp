@@ -1286,6 +1286,7 @@ bool CacheFile::allocCompRess(void)
     // Parameters are sticky
     // NOTE: ZSTD_CLEVEL_DEFAULT is currently 3, sane range is 1-19
     ZSTD_CCtx_setParameter(_comp_ress->cctx, ZSTD_c_compressionLevel, ZSTD_CLEVEL_DEFAULT);
+    // This would be redundant with CRe's own calcHash, AFAICT?
     //ZSTD_CCtx_setParameter(_comp_ress->cctx, ZSTD_c_checksumFlag, 1);
 
     // Threading? (Requires libzstd built w/ threading support)
