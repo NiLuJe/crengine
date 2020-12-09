@@ -127,7 +127,6 @@ lUInt32 TextLangMan::getHash() {
 // No need to explicitely call this in frontend code.
 // Calling HyphMan::uninit() will have this one called.
 void TextLangMan::uninit() {
-    printf("TextLangMan::uninit\n");
     _lang_cfg_list.clear();
 }
 
@@ -822,17 +821,8 @@ TextLangCfg::TextLangCfg( lString32 lang_tag ) {
 }
 
 TextLangCfg::~TextLangCfg() {
-    // NOTE: We get a second instance as soon as more than one document have been loaded,
-    //       but _hyph_method always points to the same address.
-    printf("TextLangCfg::~TextLangCfg() on %p with _hyph_method=%p\n", this, _hyph_method);
-    // Actual storage cleared by HyphMan::uninit -> TextLangMan::uninit?
-    // (which we never call)
-    if (_hyph_method) {
-        //printf("TextLangCfg::~TextLangCfg(): deleting...\n");
-        //delete _hyph_method;
-        //_hyph_method = nullptr;
-        printf("TextLangCfg::~TextLangCfg(): _hyph_method is now %p\n", _hyph_method);
-    }
+    // NOTE: _hyph_method may be dangling now, not *quite* sure what it points to,
+    //       and how it relates to HyphMan::uninit & TextLangMan::uninit
 }
 
 void TextLangCfg::resetCounters() {

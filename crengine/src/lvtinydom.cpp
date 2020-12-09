@@ -4645,7 +4645,6 @@ void ldomDocument::printWarning(const char * msg, int warning_id) {
 
 ldomDocument::~ldomDocument()
 {
-    printf("ldomDocument::~ldomDocument() on %p\n", this);
 #if BUILD_LITE!=1
     updateMap(); // NOLINT: Call to virtual function during destruction
 #endif
@@ -14660,7 +14659,6 @@ int tinyNodeCollection::getPersistenceFlags()
 
 void ldomDocument::clear()
 {
-    printf("ldomDocument::clear() on %p\n", this);
 #if BUILD_LITE!=1
     clearRendBlockCache();
     _rendered = false;
@@ -15481,7 +15479,6 @@ ContinuousOperationResult ldomDocument::swapToCache( CRTimerUtil & maxTime )
 /// saves recent changes to mapped file
 ContinuousOperationResult ldomDocument::updateMap(CRTimerUtil & maxTime, LVDocViewCallback * progressCallback)
 {
-    printf("ldomDocument::updateMap on %p\n", this);
     if ( !_cacheFile || !_mapped ) {
         CRLog::info("No cache file or not mapped");
         return CR_DONE;

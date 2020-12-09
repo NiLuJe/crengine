@@ -166,14 +166,12 @@ public:
 
 void HyphMan::uninit()
 {
-    printf("HyphMan::uninit\n");
     // Avoid existing frontend code to have to call it:
     TextLangMan::uninit();
     // Clean up _loaded_hyph_methods
     LVHashTable<lString32, HyphMethod*>::iterator it = _loaded_hyph_methods.forwardIterator();
     LVHashTable<lString32, HyphMethod*>::pair* pair;
     while ((pair = it.next())) {
-        printf("pair: %p -> value: %p\n", pair, pair->value);
         delete pair->value;
     }
     _loaded_hyph_methods.clear();
