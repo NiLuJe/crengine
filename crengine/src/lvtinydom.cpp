@@ -1315,7 +1315,7 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
     // Lazy init our ressources, and keep 'em around
     if (!_comp_ress) {
         if(!allocCompRess()) {
-            // printf("ldomPack() failed to allocate ressources\n");
+            CRLog::error("ldomPack() failed to allocate ressources");
             return false;
         }
     }
@@ -1329,7 +1329,7 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
     // Reset the context
     size_t const err = ZSTD_CCtx_reset(cctx, ZSTD_reset_session_only);
     if (ZSTD_isError(err)) {
-        // printf("ZSTD_CCtx_reset() error: %s\n", ZSTD_getErrorName(err));
+        CRLog::error("ZSTD_CCtx_reset() error: %s", ZSTD_getErrorName(err));
         return false;
     }
 
@@ -1349,7 +1349,7 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
         ZSTD_outBuffer output = { buffOut, buffOutSize, 0 };
         size_t const remaining = ZSTD_compressStream2(cctx, &output, &input, mode);
         if (ZSTD_isError(remaining)) {
-            // printf("ZSTD_compressStream2() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(remaining), bufsize, compressed_size);
+            CRLog::error("ZSTD_compressStream2() error: %s (%zu -> %zu)", ZSTD_getErrorName(remaining), bufsize, compressed_size);
             if (compressed_buf) {
                 free(compressed_buf);
             }
@@ -1415,7 +1415,7 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
     // Lazy init our ressources, and keep 'em around
     if (!_decomp_ress) {
         if(!allocDecompRess()) {
-            // printf("ldomUnpack() failed to allocate ressources\n");
+            CRLog:error("ldomUnpack() failed to allocate ressources");
             return false;
         }
     }
@@ -1428,7 +1428,7 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
     // Reset the context
     size_t const err = ZSTD_DCtx_reset(dctx, ZSTD_reset_session_only);
     if (ZSTD_isError(err)) {
-        // printf("ZSTD_DCtx_reset() error: %s\n", ZSTD_getErrorName(err));
+        CRLog::error("ZSTD_DCtx_reset() error: %s", ZSTD_getErrorName(err));
         return false;
     }
 
@@ -1441,7 +1441,7 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
         ZSTD_outBuffer output = { buffOut, buffOutSize, 0 };
         size_t const ret = ZSTD_decompressStream(dctx, &output , &input);
         if (ZSTD_isError(ret)) {
-            // printf("ZSTD_decompressStream() error: %s (%zu -> %zu)\n", ZSTD_getErrorName(ret), compsize, uncompressed_size);
+            CRLog:errror("ZSTD_decompressStream() error: %s (%zu -> %zu)", ZSTD_getErrorName(ret), compsize, uncompressed_size);
             if (uncompressed_buf) {
                 free(uncompressed_buf);
             }
@@ -1606,14 +1606,15 @@ ldomBlobCache::ldomBlobCache() : _cacheFile(NULL), _changed(false)
 bool ldomBlobCache::loadIndex()
 {
     bool res;
-    SerialBuf buf(0,true);
+    SerialBuf buf(0, true);
     res = _cacheFile->read(CBT_BLOB_INDEX, buf);
     if (!res) {
         _list.clear();
         return true; // missing blob index: treat as empty list of blobs
     }
-    if (!buf.checkMagic(BLOB_INDEX_MAGIC))
+    if (!buf.checkMagic(BLOB_INDEX_MAGIC)) {
         return false;
+    }
     lUInt32 len;
     buf >> len;
     for ( lUInt32 i = 0; i<len; i++ ) {
@@ -1634,7 +1635,7 @@ bool ldomBlobCache::loadIndex()
 bool ldomBlobCache::saveIndex()
 {
     bool res;
-    SerialBuf buf(0,true);
+    SerialBuf buf(0, true);
     buf.putMagic(BLOB_INDEX_MAGIC);
     lUInt32 len = _list.length();
     buf << len;
@@ -1649,8 +1650,9 @@ bool ldomBlobCache::saveIndex()
 
 ContinuousOperationResult ldomBlobCache::saveToCache(CRTimerUtil & timeout)
 {
-    if (!_list.length() || !_changed || _cacheFile==NULL)
+    if (!_list.length() || !_changed || _cacheFile==NULL) {
         return CR_DONE;
+    }
     bool res = true;
     for ( int i=0; i<_list.length(); i++ ) {
         ldomBlobItem * item = _list[i];
@@ -1659,12 +1661,14 @@ ContinuousOperationResult ldomBlobCache::saveToCache(CRTimerUtil & timeout)
             if (res)
                 item->setIndex(i, item->getSize());
         }
-        if (timeout.expired())
+        if (timeout.expired()) {
             return CR_TIMEOUT;
+        }
     }
     res = saveIndex() && res;
-    if ( res )
+    if ( res ) {
         _changed = false;
+    }
     return res ? CR_DONE : CR_ERROR;
 }
 
@@ -2538,11 +2542,13 @@ bool tinyNodeCollection::createCacheFile()
     lString32 cache_path;
     LVStreamRef map = ldomDocCache::createNew( fname, crc, getPersistenceFlags(), sz, cache_path );
     if ( map.isNull() ) {
+        CRLog::error("Cannot swap: failed to allocate cache map");
         delete f;
         return false;
     }
 
     if ( !f->create( map ) ) {
+        CRLog::error("Cannot swap: failed to create map file");
         delete f;
         return false;
     }
@@ -4639,6 +4645,7 @@ void ldomDocument::printWarning(const char * msg, int warning_id) {
 
 ldomDocument::~ldomDocument()
 {
+    printf("ldomDocument::~ldomDocument() on %p\n", this);
 #if BUILD_LITE!=1
     updateMap(); // NOLINT: Call to virtual function during destruction
 #endif
@@ -14653,6 +14660,7 @@ int tinyNodeCollection::getPersistenceFlags()
 
 void ldomDocument::clear()
 {
+    printf("ldomDocument::clear() on %p\n", this);
 #if BUILD_LITE!=1
     clearRendBlockCache();
     _rendered = false;
@@ -15473,11 +15481,14 @@ ContinuousOperationResult ldomDocument::swapToCache( CRTimerUtil & maxTime )
 /// saves recent changes to mapped file
 ContinuousOperationResult ldomDocument::updateMap(CRTimerUtil & maxTime, LVDocViewCallback * progressCallback)
 {
-    if ( !_cacheFile || !_mapped )
+    printf("ldomDocument::updateMap on %p\n", this);
+    if ( !_cacheFile || !_mapped ) {
+        CRLog::info("No cache file or not mapped");
         return CR_DONE;
+    }
 
     if ( _cacheFileLeaveAsDirty ) {
-        CRLog::info("requested to set cache file as dirty without any update");
+        CRLog::info("Requested to set cache file as dirty without any update");
         _cacheFile->setDirtyFlag(true);
         return CR_DONE;
     }
@@ -15489,8 +15500,7 @@ ContinuousOperationResult ldomDocument::updateMap(CRTimerUtil & maxTime, LVDocVi
     CRLog::info("Updating cache file");
 
     ContinuousOperationResult res = saveChanges(maxTime, progressCallback); // NOLINT: Call to virtual function during destruction
-    if ( res==CR_ERROR )
-    {
+    if ( res==CR_ERROR ) {
         CRLog::error("Error while saving changes to cache file");
         return CR_ERROR;
     }

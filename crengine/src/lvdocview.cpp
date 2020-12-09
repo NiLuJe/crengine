@@ -220,6 +220,7 @@ LVDocView::LVDocView(int bitsPerPixel, bool noDefaultDocument) :
 }
 
 LVDocView::~LVDocView() {
+	printf("LVDocView::~LVDocView() on %p\n", this);
 	Clear();
 }
 
@@ -521,6 +522,7 @@ void LVDocView::updateDocStyleSheet() {
 }
 
 void LVDocView::Clear() {
+	printf("LVDocView::Clear() on %p\n", this);
 	{
 		LVLock lock(getMutex());
 		if (m_doc)
@@ -3937,6 +3939,7 @@ bool LVDocView::LoadDocument(const lChar32 * fname, bool metadataOnly) {
 }
 
 void LVDocView::close() {
+    printf("LVDocView::close() on %p\n", this);
     if ( m_doc )
         m_doc->updateMap(m_callback); // show save cache file progress
     createDefaultDocument(lString32::empty_str, lString32::empty_str);
@@ -3972,6 +3975,7 @@ void LVDocView::createHtmlDocument(lString32 code) {
 }
 
 void LVDocView::createDefaultDocument(lString32 title, lString32 message) {
+    printf("LVDocView::createDefaultDocument on %p\n", this);
     Clear();
     m_showCover = false;
     createEmptyDocument();

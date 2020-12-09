@@ -824,13 +824,13 @@ TextLangCfg::TextLangCfg( lString32 lang_tag ) {
 TextLangCfg::~TextLangCfg() {
     // NOTE: We get a second instance as soon as more than one document have been loaded,
     //       but _hyph_method always points to the same address.
-    printf("TextLangCfg::~TextLangCfg(): this=%p _hyph_method=%p\n", this, _hyph_method);
+    printf("TextLangCfg::~TextLangCfg() on %p with _hyph_method=%p\n", this, _hyph_method);
     // Actual storage cleared by HyphMan::uninit -> TextLangMan::uninit?
     // (which we never call)
     if (_hyph_method) {
         //printf("TextLangCfg::~TextLangCfg(): deleting...\n");
         //delete _hyph_method;
-        _hyph_method = nullptr;
+        //_hyph_method = nullptr;
         printf("TextLangCfg::~TextLangCfg(): _hyph_method is now %p\n", _hyph_method);
     }
 }
