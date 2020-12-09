@@ -820,7 +820,8 @@ TextLangCfg::TextLangCfg( lString32 lang_tag ) {
 }
 
 TextLangCfg::~TextLangCfg() {
-    delete _hyph_method;
+    if (_hyph_method)
+        delete _hyph_method;
 }
 
 void TextLangCfg::resetCounters() {
