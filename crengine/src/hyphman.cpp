@@ -461,7 +461,6 @@ HyphMan::HyphMan()
 
 HyphMan::~HyphMan()
 {
-    printf("HyphMan::~HyphMan()\n");
 }
 
 // Used by SoftHyphensHyph::hyphenate(), but also possibly (when

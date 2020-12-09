@@ -110,7 +110,6 @@ TextLangMan::TextLangMan() {
 }
 
 TextLangMan::~TextLangMan() {
-    printf("TextLangMan::~TextLangMan()\n");
 }
 
 lUInt32 TextLangMan::getHash() {
