@@ -644,10 +644,9 @@ public:
 
 // create uninitialized cache file, call open or create to initialize
 CacheFile::CacheFile(lUInt32 domVersion)
-#if (USE_ZSTD == 1)
-: _sectorSize( CACHE_FILE_SECTOR_SIZE ), _size(0), _indexChanged(false), _dirty(true), _domVersion(domVersion), _map(1024), _cachePath(lString32::empty_str), _comp_ress(nullptr), _decomp_ress(nullptr)
-#else
 : _sectorSize( CACHE_FILE_SECTOR_SIZE ), _size(0), _indexChanged(false), _dirty(true), _domVersion(domVersion), _map(1024), _cachePath(lString32::empty_str)
+#if (USE_ZSTD == 1)
+    , _comp_ress(nullptr), _decomp_ress(nullptr)
 #endif
 {
 }
