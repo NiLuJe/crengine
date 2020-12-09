@@ -820,8 +820,9 @@ TextLangCfg::TextLangCfg( lString32 lang_tag ) {
 }
 
 TextLangCfg::~TextLangCfg() {
-    if (_hyph_method)
-        delete _hyph_method;
+    //printf("TextLangCfg::~TextLangCfg(): _hyph_method=%p\n", _hyph_method);
+    // Actual storage cleared by TextLangMan::uninit?
+    //_hyph_method = nullptr;
 }
 
 void TextLangCfg::resetCounters() {
