@@ -820,6 +820,8 @@ TextLangCfg::TextLangCfg( lString32 lang_tag ) {
 }
 
 TextLangCfg::~TextLangCfg() {
+    // NOTE: Apparently gets called twice, somehow concurrently, if more than a single document was opened.
+    //       (And never called on close, btw).
     //printf("TextLangCfg::~TextLangCfg(): _hyph_method=%p\n", _hyph_method);
     // Actual storage cleared by TextLangMan::uninit?
     //_hyph_method = nullptr;
