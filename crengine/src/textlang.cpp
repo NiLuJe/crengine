@@ -822,8 +822,9 @@ TextLangCfg::TextLangCfg( lString32 lang_tag ) {
 }
 
 TextLangCfg::~TextLangCfg() {
-    // NOTE: Apparently gets called twice, on the same object, somehow concurrently, if more than a single document was opened?!
-    printf("TextLangCfg::~TextLangCfg(): _hyph_method=%p\n", _hyph_method);
+    // NOTE: We get a second instance as soon as more than one document have been loaded,
+    //       but _hyph_method always points to the same address.
+    printf("TextLangCfg::~TextLangCfg(): this=%p _hyph_method=%p\n", this, _hyph_method);
     // Actual storage cleared by HyphMan::uninit -> TextLangMan::uninit?
     // (which we never call)
     if (_hyph_method) {
