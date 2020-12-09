@@ -166,6 +166,7 @@ public:
 
 void HyphMan::uninit()
 {
+    printf("HyphMan::uninit\n");
     // Avoid existing frontend code to have to call it:
     TextLangMan::uninit();
     // Clean up _loaded_hyph_methods
@@ -461,6 +462,7 @@ HyphMan::HyphMan()
 
 HyphMan::~HyphMan()
 {
+    printf("HyphMan::~HyphMan()\n");
 }
 
 // Used by SoftHyphensHyph::hyphenate(), but also possibly (when

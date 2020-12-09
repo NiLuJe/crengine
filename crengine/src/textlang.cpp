@@ -110,6 +110,7 @@ TextLangMan::TextLangMan() {
 }
 
 TextLangMan::~TextLangMan() {
+    printf("TextLangMan::~TextLangMan()\n");
 }
 
 lUInt32 TextLangMan::getHash() {
@@ -126,6 +127,7 @@ lUInt32 TextLangMan::getHash() {
 // No need to explicitely call this in frontend code.
 // Calling HyphMan::uninit() will have this one called.
 void TextLangMan::uninit() {
+    printf("TextLangMan::uninit\n");
     _lang_cfg_list.clear();
 }
 
@@ -820,10 +822,10 @@ TextLangCfg::TextLangCfg( lString32 lang_tag ) {
 }
 
 TextLangCfg::~TextLangCfg() {
-    // NOTE: Apparently gets called twice, somehow concurrently, if more than a single document was opened.
-    //       (And never called on close, btw).
-    //printf("TextLangCfg::~TextLangCfg(): _hyph_method=%p\n", _hyph_method);
-    // Actual storage cleared by TextLangMan::uninit?
+    // NOTE: Apparently gets called twice, on the same object, somehow concurrently, if more than a single document was opened.
+    printf("TextLangCfg::~TextLangCfg(): _hyph_method=%p\n", _hyph_method);
+    // Actual storage cleared by HyphMan::uninit -> TextLangMan::uninit?
+    // (which we never call)
     //_hyph_method = nullptr;
 }
 
