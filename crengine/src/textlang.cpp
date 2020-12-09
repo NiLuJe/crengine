@@ -822,11 +822,16 @@ TextLangCfg::TextLangCfg( lString32 lang_tag ) {
 }
 
 TextLangCfg::~TextLangCfg() {
-    // NOTE: Apparently gets called twice, on the same object, somehow concurrently, if more than a single document was opened.
+    // NOTE: Apparently gets called twice, on the same object, somehow concurrently, if more than a single document was opened?!
     printf("TextLangCfg::~TextLangCfg(): _hyph_method=%p\n", _hyph_method);
     // Actual storage cleared by HyphMan::uninit -> TextLangMan::uninit?
     // (which we never call)
-    //_hyph_method = nullptr;
+    if (_hyph_method) {
+        //printf("TextLangCfg::~TextLangCfg(): deleting...\n");
+        //delete _hyph_method;
+        _hyph_method = nullptr;
+        printf("TextLangCfg::~TextLangCfg(): _hyph_method is now %p\n", _hyph_method);
+    }
 }
 
 void TextLangCfg::resetCounters() {
