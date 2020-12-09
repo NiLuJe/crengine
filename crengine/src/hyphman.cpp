@@ -173,6 +173,7 @@ void HyphMan::uninit()
     LVHashTable<lString32, HyphMethod*>::iterator it = _loaded_hyph_methods.forwardIterator();
     LVHashTable<lString32, HyphMethod*>::pair* pair;
     while ((pair = it.next())) {
+        printf("pair: %p -> value: %p\n", pair, pair->value);
         delete pair->value;
     }
     _loaded_hyph_methods.clear();
