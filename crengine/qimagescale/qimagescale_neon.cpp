@@ -65,7 +65,7 @@ inline static uint32x4_t qt_qimageScaleAARGBA_helper(const unsigned int * __rest
 }
 
 template<bool RGB>
-void qt_qimageScaleAARGBA_up_x_down_y_neon(QImageScaleInfo *isi, unsigned int *dest,
+void qt_qimageScaleAARGBA_up_x_down_y_neon(QImageScaleInfo *isi, unsigned int * __restrict dest,
                                            int dw, int dh, int dow, int sow)
 {
     const unsigned int ** __restrict ypoints = isi->ypoints;
@@ -104,7 +104,7 @@ void qt_qimageScaleAARGBA_up_x_down_y_neon(QImageScaleInfo *isi, unsigned int *d
 }
 
 template<bool RGB>
-void qt_qimageScaleAARGBA_down_x_up_y_neon(QImageScaleInfo *isi, unsigned int *dest,
+void qt_qimageScaleAARGBA_down_x_up_y_neon(QImageScaleInfo *isi, unsigned int * __restrict dest,
                                            int dw, int dh, int dow, int sow)
 {
     const unsigned int ** __restrict ypoints = isi->ypoints;
@@ -143,7 +143,7 @@ void qt_qimageScaleAARGBA_down_x_up_y_neon(QImageScaleInfo *isi, unsigned int *d
 }
 
 template<bool RGB>
-void qt_qimageScaleAARGBA_down_xy_neon(QImageScaleInfo *isi, unsigned int *dest,
+void qt_qimageScaleAARGBA_down_xy_neon(QImageScaleInfo *isi, unsigned int * __restrict dest,
                                        int dw, int dh, int dow, int sow)
 {
     const unsigned int ** __restrict ypoints = isi->ypoints;
@@ -190,22 +190,22 @@ void qt_qimageScaleAARGBA_down_xy_neon(QImageScaleInfo *isi, unsigned int *dest,
     }
 }
 
-template void qt_qimageScaleAARGBA_up_x_down_y_neon<false>(QImageScaleInfo *isi, unsigned int *dest,
+template void qt_qimageScaleAARGBA_up_x_down_y_neon<false>(QImageScaleInfo *isi, unsigned int * __restrict dest,
                                                            int dw, int dh, int dow, int sow);
 
-template void qt_qimageScaleAARGBA_up_x_down_y_neon<true>(QImageScaleInfo *isi, unsigned int *dest,
+template void qt_qimageScaleAARGBA_up_x_down_y_neon<true>(QImageScaleInfo *isi, unsigned int * __restrict dest,
                                                           int dw, int dh, int dow, int sow);
 
-template void qt_qimageScaleAARGBA_down_x_up_y_neon<false>(QImageScaleInfo *isi, unsigned int *dest,
+template void qt_qimageScaleAARGBA_down_x_up_y_neon<false>(QImageScaleInfo *isi, unsigned int * __restrict dest,
                                                            int dw, int dh, int dow, int sow);
 
-template void qt_qimageScaleAARGBA_down_x_up_y_neon<true>(QImageScaleInfo *isi, unsigned int *dest,
+template void qt_qimageScaleAARGBA_down_x_up_y_neon<true>(QImageScaleInfo *isi, unsigned int * __restrict dest,
                                                           int dw, int dh, int dow, int sow);
 
-template void qt_qimageScaleAARGBA_down_xy_neon<false>(QImageScaleInfo *isi, unsigned int *dest,
+template void qt_qimageScaleAARGBA_down_xy_neon<false>(QImageScaleInfo *isi, unsigned int * __restrict dest,
                                                        int dw, int dh, int dow, int sow);
 
-template void qt_qimageScaleAARGBA_down_xy_neon<true>(QImageScaleInfo *isi, unsigned int *dest,
+template void qt_qimageScaleAARGBA_down_xy_neon<true>(QImageScaleInfo *isi, unsigned int * __restrict dest,
                                                       int dw, int dh, int dow, int sow);
 }
 
