@@ -704,6 +704,10 @@ public:
                         continue;
                     }
 
+                    const int byteindex = (xx >> 2);
+                    const int bitindex = (3-(xx & 3))<<1;
+                    const lUInt8 mask = 0xC0 >> (6 - bitindex);
+
                     lUInt32 cl = data[xmap ? xmap[x] : x];
                     const lUInt8 alpha = (cl >> 24)&0xFF;
                     if ( alpha == 0xFF ) {
@@ -715,10 +719,6 @@ public:
                             continue;
                         }
                     } else if ( alpha != 0 ) {
-                        const int byteindex = (xx >> 2);
-                        const int bitindex = (3-(xx & 3))<<1;
-                        const lUInt8 mask = 0xC0 >> (6 - bitindex);
-
                         lUInt8 origLuma = (row[ byteindex ] & mask)>>bitindex;
                         origLuma = origLuma | (origLuma<<2);
                         origLuma = origLuma | (origLuma<<4);
