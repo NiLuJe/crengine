@@ -1457,7 +1457,7 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
     }
 
     if (lastRet != 0) {
-        // printf("ldomUnpack(): EOF before end of stream: %zu\n", lastRet);
+        CRLog::error("ldomUnpack(): EOF before end of stream: %zu", lastRet);
         if (uncompressed_buf) {
             free(uncompressed_buf);
         }
