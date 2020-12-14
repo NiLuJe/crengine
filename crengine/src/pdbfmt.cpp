@@ -499,7 +499,7 @@ private:
             }
         } else if ( _compression==10 ) {
             // zlib
-            /// unpack data from _compbuf to _buf
+            /// unpack data from src to dst
             lUInt8 * dstbuf;
             lUInt32 dstsize;
             if ( !zlibUnpack( src.get(), src.size(), dstbuf, dstsize ) )
@@ -509,7 +509,7 @@ private:
         } else if ( _compression==17480 ) {
             // zlib
             // TODO: shouldn't it be HUFFMAN unpacker?
-            /// unpack data from _compbuf to _buf
+            /// unpack data from src to dst
             lUInt8 * dstbuf;
             lUInt32 dstsize;
             if ( !zlibUnpack( src.get(), src.size(), dstbuf, dstsize ) )

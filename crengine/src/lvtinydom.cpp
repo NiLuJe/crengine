@@ -615,9 +615,9 @@ public:
     bool allocDecompRess(void);
     bool freeDecompRess(void);
 #endif
-    /// pack data from _buf to _compbuf
+    /// pack data from buf to dstbuf
     bool ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, lUInt32 & dstsize );
-    /// unpack data from _compbuf to _buf
+    /// unpack data from compbuf to dstbuf
     bool ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &dstbuf, lUInt32 & dstsize );
 
     /// sets dirty flag value, returns true if value is changed
@@ -1307,7 +1307,7 @@ bool CacheFile::freeCompRess(void)
     return false;
 }
 
-/// pack data from _buf to _compbuf
+/// pack data from buf to dstbuf
 bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, lUInt32 & dstsize )
 {
     // printf("ldomPack() <- %p (%zu)\n", buf, bufsize);
@@ -1407,7 +1407,7 @@ bool CacheFile::freeDecompRess(void)
     return false;
 }
 
-/// unpack data from _compbuf to _buf
+/// unpack data from compbuf to dstbuf
 bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &dstbuf, lUInt32 & dstsize  )
 {
     // printf("ldomUnpack() <- %p (%zu)\n", compbuf, compsize);
@@ -1470,7 +1470,7 @@ bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &d
     return true;
 }
 #else
-/// pack data from _buf to _compbuf
+/// pack data from buf to dstbuf
 bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, lUInt32 & dstsize )
 {
     lUInt8 tmp[PACK_BUF_SIZE]; // 64K buffer for compressed data
@@ -1512,7 +1512,7 @@ bool CacheFile::ldomPack( const lUInt8 * buf, size_t bufsize, lUInt8 * &dstbuf, 
     return true;
 }
 
-/// unpack data from _compbuf to _buf
+/// unpack data from compbuf to dstbuf
 bool CacheFile::ldomUnpack( const lUInt8 * compbuf, size_t compsize, lUInt8 * &dstbuf, lUInt32 & dstsize  )
 {
     lUInt8 tmp[UNPACK_BUF_SIZE]; // 256K buffer for uncompressed data
